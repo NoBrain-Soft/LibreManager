@@ -87,7 +87,7 @@ make e2e            # VM-based end-to-end tests (Incus/Vagrant)
 - [x] Helper with apt + dnf backends; list/refresh/upgrade (all/security/named), reboot, service control
 - [x] Job framework (fan-out, progress output, cancel, expiry/timeouts), job history API, fleet updates API
 - [x] Hash-chained audit log + verification API
-- [ ] Audit syslog export (RFC 5424 over TLS)
+- [x] Audit syslog export (RFC 5424 over TLS, `STELLWERK_AUDIT_SYSLOG`)
 - [x] Test: tampered/replayed envelope rejected (`test/integration`)
 
 ### Phase 3 — Remote shell, RBAC

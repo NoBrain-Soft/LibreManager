@@ -41,6 +41,10 @@ type Config struct {
 	TrustedProxies []*net.IPNet
 	// ShutdownTimeout bounds graceful shutdown.
 	ShutdownTimeout time.Duration
+	// AuditSyslog is host:port of an RFC 5424/5425 TLS syslog receiver
+	// (empty = disabled); AuditSyslogCA optionally pins its CA bundle.
+	AuditSyslog   string
+	AuditSyslogCA string
 }
 
 // FromEnv loads configuration from the environment with defaults.
@@ -55,6 +59,8 @@ func FromEnv() (*Config, error) {
 		GatewayListen:      env("STELLWERK_GATEWAY_LISTEN", ":8443"),
 		VictoriaMetricsURL: strings.TrimRight(env("STELLWERK_VICTORIAMETRICS_URL", "http://127.0.0.1:8428"), "/"),
 		ShutdownTimeout:    15 * time.Second,
+		AuditSyslog:        os.Getenv("STELLWERK_AUDIT_SYSLOG"),
+		AuditSyslogCA:      os.Getenv("STELLWERK_AUDIT_SYSLOG_CA"),
 	}
 	dsn, err := secretOrEnv("STELLWERK_DATABASE_URL")
 	if err != nil {

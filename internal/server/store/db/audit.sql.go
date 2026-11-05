@@ -45,6 +45,45 @@ func (q *Queries) AuditAfter(ctx context.Context, id int64) ([]AuditLog, error) 
 	return items, nil
 }
 
+const auditBatchAfter = `-- name: AuditBatchAfter :many
+SELECT id, ts, actor, actor_ip, action, target, details, prev_hash, hash FROM audit_log WHERE id > $1 ORDER BY id LIMIT $2
+`
+
+type AuditBatchAfterParams struct {
+	ID    int64
+	Limit int32
+}
+
+func (q *Queries) AuditBatchAfter(ctx context.Context, arg AuditBatchAfterParams) ([]AuditLog, error) {
+	rows, err := q.db.Query(ctx, auditBatchAfter, arg.ID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []AuditLog{}
+	for rows.Next() {
+		var i AuditLog
+		if err := rows.Scan(
+			&i.ID,
+			&i.Ts,
+			&i.Actor,
+			&i.ActorIp,
+			&i.Action,
+			&i.Target,
+			&i.Details,
+			&i.PrevHash,
+			&i.Hash,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const auditRange = `-- name: AuditRange :many
 SELECT id, ts, actor, actor_ip, action, target, details, prev_hash, hash FROM audit_log WHERE id > $1 ORDER BY id LIMIT $2
 `

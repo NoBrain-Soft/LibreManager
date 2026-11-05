@@ -206,6 +206,15 @@ func RunAPI(ctx context.Context, cfg *config.Config) error {
 		BaseContext: func(net.Listener) context.Context { return ctx },
 	}
 	go srv.RunBackground(ctx)
+	if cfg.AuditSyslog != "" {
+		exp := &audit.Exporter{Store: st, Addr: cfg.AuditSyslog, Hostname: cfg.PublicHost()}
+		if cfg.AuditSyslogCA != "" {
+			if exp.RootCAs, err = audit.LoadCA(cfg.AuditSyslogCA); err != nil {
+				return err
+			}
+		}
+		go exp.Run(ctx)
+	}
 	go func() {
 		<-ctx.Done()
 		sctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cfg.ShutdownTimeout)
