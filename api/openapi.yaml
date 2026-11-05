@@ -1443,7 +1443,7 @@ components:
               pid: { type: integer }
               name: { type: string }
               user: { type: string }
-              cpu_percent: { type: number }
+              cpu_percent: { type: number, format: double }
               rss_bytes: { type: integer, format: int64 }
               cmdline: { type: string }
               state: { type: string }
@@ -1470,7 +1470,7 @@ components:
                   type: array
                   minItems: 2
                   maxItems: 2
-                  items: { type: number }
+                  items: { type: number, format: double }
     CheckResult:
       type: object
       required: [check_id, status, severity, title]
@@ -1489,7 +1489,7 @@ components:
       required: [hosts, failing_checks]
       properties:
         hosts: { type: integer }
-        compliance_percent: { type: number }
+        compliance_percent: { type: number, format: double }
         failing_checks:
           type: array
           items:
