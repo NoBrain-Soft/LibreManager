@@ -7,7 +7,7 @@ Central Linux server management platform: Go server + Go agent (outbound mTLS gR
 
 > Update this line when a phase is finished.
 
-**Phase 0 — Foundations** (see ARCHITECTURE.md §9). Work through the checklist at the bottom of this file in order.
+**Phases 0–3 implemented; Phase 4 partially** (see ARCHITECTURE.md §9 and the checklists below). Owner decisions on the former open questions are in ARCHITECTURE.md §12 (local accounts, no IdP yet — ADR-0009). Next: VM-based validation of the Phase 1–3 exit criteria, then the Phase 4 vulnerability worker.
 
 ## Tech stack (fixed — don't swap without an ADR)
 
@@ -62,24 +62,44 @@ make e2e            # VM-based end-to-end tests (Incus/Vagrant)
 ## Phase checklists
 
 ### Phase 0 — Foundations
-- [ ] `go.mod`, directory skeleton per ARCHITECTURE.md §10, `README.md`
-- [ ] `buf.yaml` + initial protos: `gateway.proto` (Enroll, Connect bidi, Renew, ShellSession), `job.proto` (SignedJob/Job per §6.3), `metrics.proto`, `inventory.proto`
-- [ ] `api/openapi.yaml` skeleton (auth, hosts, enrollment-tokens, jobs, events WS)
-- [ ] `internal/common/envelope`: sign/verify with domain separation + full negative test suite + fuzz test
-- [ ] `internal/pki`: root/intermediate CA creation, CSR signing with SPIFFE URI SAN, test PKI helper
-- [ ] Makefile targets above (stubs ok), `.golangci.yml`, CI workflow (lint, test, gosec, govulncheck, build)
-- [ ] `deploy/dev/compose.yml` (postgres, victoriametrics), goose migrations for core tables (§5.7: users, hosts, host_groups, enrollment_tokens, agent_certs, audit_log)
-- [ ] ADRs 0001–0008 from ARCHITECTURE.md §2 (agent vs SSH, gRPC/mTLS, VictoriaMetrics, signer separation, built-in CA, Go, React, Compose deployment)
+- [x] `go.mod`, directory skeleton per ARCHITECTURE.md §10, `README.md`
+- [x] `buf.yaml` + initial protos: `gateway.proto` (Enroll, Connect bidi, Renew, ShellSession), `job.proto` (SignedJob/Job per §6.3), `metrics.proto`, `inventory.proto` (+ `helper.proto`, `central/v1/control.proto`)
+- [x] `api/openapi.yaml` skeleton (auth, hosts, enrollment-tokens, jobs, events WS) — full Phase 1–3 surface
+- [x] `internal/common/envelope`: sign/verify with domain separation + full negative test suite + fuzz test
+- [x] `internal/pki`: root/intermediate CA creation, CSR signing with SPIFFE URI SAN, test PKI helper
+- [x] Makefile targets above, `.golangci.yml`, CI workflow (lint, test, gosec, govulncheck, build)
+- [x] `deploy/dev/compose.yml` (postgres, victoriametrics), goose migrations for core tables (§5.7)
+- [x] ADRs 0001–0008 from ARCHITECTURE.md §2 (+ 0009 local accounts, 0010 notification routing)
 
 ### Phase 1 — MVP core (see ARCHITECTURE.md §9 for exit criteria)
-- [ ] `server init` (migrations, CA, keys, break-glass admin)
-- [ ] Gateway: mTLS listener, Enroll, Connect stream, registry, heartbeats, revocation denylist, cert renewal
-- [ ] Agent: enroll, connect/backoff, collectors, spool, inventory
-- [ ] Gateway → VictoriaMetrics remote-write with server-side labels
-- [ ] API: local auth (Argon2id + WebAuthn/TOTP), sessions, hosts, enrollment tokens, metrics query proxy
-- [ ] Web: login, host list, host detail (overview, charts, inventory), enrollment UI
-- [ ] `deploy/install-central.sh`, `deploy/agent-install.sh.tmpl`, nfpm packaging + systemd units (hardened)
-- [ ] `make agent-bench` passing budget
+- [x] `server init` (migrations, CA, keys, break-glass admin)
+- [x] Gateway: mTLS listener, Enroll, Connect stream, registry, heartbeats, revocation denylist, cert renewal
+- [x] Agent: enroll, connect/backoff, collectors, spool, inventory
+- [x] Gateway → VictoriaMetrics remote-write with server-side labels
+- [x] API: local auth (Argon2id + WebAuthn/TOTP), sessions, hosts, enrollment tokens, metrics query proxy
+- [ ] Web: login, host list, host detail (overview, charts, inventory), enrollment UI — in progress
+- [x] `deploy/install-central.sh`, `deploy/agent-install.sh.tmpl`, nfpm packaging + systemd units (hardened)
+- [x] `make agent-bench` passing budget (14.6 MB binary, 17.9 MB RSS, 0.03 % CPU measured)
+- [ ] Exit criterion verified on 3 VMs (Debian 13, Ubuntu 24.04, Rocky 9) — `make e2e` harness started
+
+### Phase 2 — Jobs, packages, audit
+- [x] Signer process, signed envelopes, agent + helper verification, local policy, nonce cache, journald logging
+- [x] Helper with apt + dnf backends; list/refresh/upgrade (all/security/named), reboot, service control
+- [x] Job framework (fan-out, progress output, cancel, expiry/timeouts), job history API, fleet updates API
+- [x] Hash-chained audit log + verification API
+- [ ] Audit syslog export (RFC 5424 over TLS)
+- [x] Test: tampered/replayed envelope rejected (`test/integration`)
+
+### Phase 3 — Remote shell, RBAC
+- [x] ShellGrant flow, PTY via helper (fd passing), dedicated stream, WebSocket relay, encrypted asciicast recordings + playback API
+- [x] RBAC permissions × host-group scopes, step-up auth, configurable shell identity
+- [ ] OIDC login — deferred by owner decision (ADR-0009)
+
+### Phase 4 — Security & alerting
+- [ ] Built-in checks (§7.1) — in progress
+- [x] vmalert + Alertmanager default rules, alerts API, mail + webhook notifications, host-down state alerts
+- [ ] SBOM → Grype vuln worker, CVE views, remediation
+- [ ] Optional Lynis integration
 
 ### Phase 2+ 
 Follow ARCHITECTURE.md §9; add a checklist here when starting each phase.
