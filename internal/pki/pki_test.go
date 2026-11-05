@@ -134,7 +134,7 @@ func TestHostIDFromCertRejectsForgedSANs(t *testing.T) {
 	bad := []*x509.Certificate{
 		nil,
 		mk(),
-		mk("spiffe://stellwerk/host/" + id, "spiffe://stellwerk/host/"+ids.New()),
+		mk("spiffe://stellwerk/host/"+id, "spiffe://stellwerk/host/"+ids.New()),
 		mk("spiffe://evil/host/" + id),
 		mk("https://stellwerk/host/" + id),
 		mk("spiffe://stellwerk/user/" + id),

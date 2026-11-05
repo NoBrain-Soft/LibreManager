@@ -114,11 +114,16 @@ func (q *Queries) GetSession(ctx context.Context, idHash []byte) (Session, error
 }
 
 const setSessionStepup = `-- name: SetSessionStepup :exec
-UPDATE sessions SET stepup_at = now() WHERE id_hash = $1
+UPDATE sessions SET stepup_at = $2 WHERE id_hash = $1
 `
 
-func (q *Queries) SetSessionStepup(ctx context.Context, idHash []byte) error {
-	_, err := q.db.Exec(ctx, setSessionStepup, idHash)
+type SetSessionStepupParams struct {
+	IDHash   []byte
+	StepupAt *time.Time
+}
+
+func (q *Queries) SetSessionStepup(ctx context.Context, arg SetSessionStepupParams) error {
+	_, err := q.db.Exec(ctx, setSessionStepup, arg.IDHash, arg.StepupAt)
 	return err
 }
 

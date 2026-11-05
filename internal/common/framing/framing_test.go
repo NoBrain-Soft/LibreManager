@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 
@@ -107,5 +108,16 @@ func TestFDPassingAndPeerCred(t *testing.T) {
 	}
 	if int(cred.Uid) != os.Getuid() {
 		t.Fatalf("peer uid %d", cred.Uid)
+	}
+}
+
+func TestReadErrorDoesNotPanic(t *testing.T) {
+	a, b := socketPair(t)
+	cb := NewConn(b)
+	_ = b.SetReadDeadline(time.Now().Add(50 * time.Millisecond))
+	_, _ = a.Write([]byte{0, 0, 0, 10}) // header promising 10 bytes, never sent
+	var m helperv1.HelperResponse
+	if err := cb.Read(&m); err == nil {
+		t.Fatal("expected error on deadline")
 	}
 }

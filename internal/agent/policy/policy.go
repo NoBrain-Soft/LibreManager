@@ -71,11 +71,11 @@ type Capabilities struct {
 
 // Packages controls package management.
 type Packages struct {
-	List    bool `yaml:"list"`
+	List    bool  `yaml:"list"`
 	Refresh *bool `yaml:"refresh"`
-	Upgrade bool `yaml:"upgrade"`
-	Install bool `yaml:"install"`
-	Remove  bool `yaml:"remove"`
+	Upgrade bool  `yaml:"upgrade"`
+	Install bool  `yaml:"install"`
+	Remove  bool  `yaml:"remove"`
 }
 
 // Services controls systemd unit actions. Deny wins over allow.

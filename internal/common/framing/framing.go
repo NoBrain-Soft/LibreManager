@@ -126,12 +126,15 @@ func (c *Conn) fill() error {
 			}
 		}
 	}
-	c.buf = append(c.buf, data[:n]...)
-	if n == 0 && err == nil {
-		return io.EOF
+	// On error recvmsg may report n == -1; only consume real bytes.
+	if n > 0 {
+		c.buf = append(c.buf, data[:n]...)
 	}
-	if err != nil && n == 0 {
+	if err != nil && n <= 0 {
 		return err //nolint:wrapcheck // keep io.EOF recognizable
+	}
+	if n <= 0 {
+		return io.EOF
 	}
 	return nil
 }

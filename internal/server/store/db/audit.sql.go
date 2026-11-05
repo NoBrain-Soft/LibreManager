@@ -84,6 +84,27 @@ func (q *Queries) AuditRange(ctx context.Context, arg AuditRangeParams) ([]Audit
 	return items, nil
 }
 
+const deleteOldAudit = `-- name: DeleteOldAudit :execrows
+DELETE FROM audit_log WHERE ts < now() - make_interval(days => $1::int)
+`
+
+func (q *Queries) DeleteOldAudit(ctx context.Context, days int32) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteOldAudit, days)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const enableAuditRetention = `-- name: EnableAuditRetention :exec
+SELECT set_config('stellwerk.audit_retention', 'on', true)
+`
+
+func (q *Queries) EnableAuditRetention(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, enableAuditRetention)
+	return err
+}
+
 const insertAudit = `-- name: InsertAudit :one
 INSERT INTO audit_log (ts, actor, actor_ip, action, target, details, prev_hash, hash)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id

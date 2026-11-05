@@ -17,3 +17,7 @@ UPDATE alerts SET notified_at = now() WHERE id = $1;
 
 -- name: CountFiringAlerts :one
 SELECT count(*)::int FROM alerts WHERE status = 'firing';
+
+-- name: ListUnnotifiedAlerts :many
+SELECT a.*, coalesce(h.hostname, '')::text AS hostname FROM alerts a LEFT JOIN hosts h ON h.id = a.host_id
+WHERE a.notified_at IS NULL ORDER BY a.updated_at LIMIT 100;

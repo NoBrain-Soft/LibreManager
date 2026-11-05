@@ -94,6 +94,18 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Job, erro
 	return i, err
 }
 
+const deleteOldJobOutput = `-- name: DeleteOldJobOutput :execrows
+DELETE FROM job_output WHERE ts < now() - make_interval(days => $1::int)
+`
+
+func (q *Queries) DeleteOldJobOutput(ctx context.Context, days int32) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteOldJobOutput, days)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const expireQueuedTargets = `-- name: ExpireQueuedTargets :many
 UPDATE job_targets SET status = 'expired', finished_at = now(), message = 'host did not receive the job before it expired'
 WHERE status = 'queued' AND expires_at <= now()

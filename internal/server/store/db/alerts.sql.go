@@ -82,6 +82,63 @@ func (q *Queries) ListAlerts(ctx context.Context, status *string) ([]ListAlertsR
 	return items, nil
 }
 
+const listUnnotifiedAlerts = `-- name: ListUnnotifiedAlerts :many
+SELECT a.id, a.fingerprint, a.host_id, a.name, a.severity, a.status, a.summary, a.labels, a.annotations, a.starts_at, a.ends_at, a.notified_at, a.updated_at, coalesce(h.hostname, '')::text AS hostname FROM alerts a LEFT JOIN hosts h ON h.id = a.host_id
+WHERE a.notified_at IS NULL ORDER BY a.updated_at LIMIT 100
+`
+
+type ListUnnotifiedAlertsRow struct {
+	ID          uuid.UUID
+	Fingerprint string
+	HostID      *uuid.UUID
+	Name        string
+	Severity    string
+	Status      string
+	Summary     string
+	Labels      json.RawMessage
+	Annotations json.RawMessage
+	StartsAt    time.Time
+	EndsAt      *time.Time
+	NotifiedAt  *time.Time
+	UpdatedAt   time.Time
+	Hostname    string
+}
+
+func (q *Queries) ListUnnotifiedAlerts(ctx context.Context) ([]ListUnnotifiedAlertsRow, error) {
+	rows, err := q.db.Query(ctx, listUnnotifiedAlerts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListUnnotifiedAlertsRow{}
+	for rows.Next() {
+		var i ListUnnotifiedAlertsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Fingerprint,
+			&i.HostID,
+			&i.Name,
+			&i.Severity,
+			&i.Status,
+			&i.Summary,
+			&i.Labels,
+			&i.Annotations,
+			&i.StartsAt,
+			&i.EndsAt,
+			&i.NotifiedAt,
+			&i.UpdatedAt,
+			&i.Hostname,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markAlertNotified = `-- name: MarkAlertNotified :exec
 UPDATE alerts SET notified_at = now() WHERE id = $1
 `

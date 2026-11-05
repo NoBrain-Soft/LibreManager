@@ -20,3 +20,9 @@ SELECT * FROM audit_log WHERE id > $1 ORDER BY id LIMIT $2;
 
 -- name: AuditAfter :many
 SELECT * FROM audit_log WHERE id > $1 ORDER BY id LIMIT 500;
+
+-- name: EnableAuditRetention :exec
+SELECT set_config('stellwerk.audit_retention', 'on', true);
+
+-- name: DeleteOldAudit :execrows
+DELETE FROM audit_log WHERE ts < now() - make_interval(days => sqlc.arg('days')::int);

@@ -9,7 +9,7 @@ SELECT * FROM sessions WHERE id_hash = $1;
 UPDATE sessions SET last_seen_at = now() WHERE id_hash = $1;
 
 -- name: SetSessionStepup :exec
-UPDATE sessions SET stepup_at = now() WHERE id_hash = $1;
+UPDATE sessions SET stepup_at = $2 WHERE id_hash = $1;
 
 -- name: SetSessionWebauthn :exec
 UPDATE sessions SET webauthn_session = $2 WHERE id_hash = $1;

@@ -104,8 +104,18 @@ func (s *Sessions) Create(ctx context.Context, q *db.Queries, userID uuid.UUID, 
 }
 
 // Lookup returns the session for a cookie token, enforcing absolute and
-// idle expiry.
+// idle expiry, and records activity.
 func (s *Sessions) Lookup(ctx context.Context, token string) (*db.Session, error) {
+	return s.lookup(ctx, token, true)
+}
+
+// Peek is Lookup without recording activity (for long-lived sockets, which
+// must not keep an idle session alive).
+func (s *Sessions) Peek(ctx context.Context, token string) (*db.Session, error) {
+	return s.lookup(ctx, token, false)
+}
+
+func (s *Sessions) lookup(ctx context.Context, token string, touch bool) (*db.Session, error) {
 	if token == "" || len(token) > 128 {
 		return nil, ErrNoSession
 	}
@@ -124,7 +134,7 @@ func (s *Sessions) Lookup(ctx context.Context, token string) (*db.Session, error
 		return nil, ErrNoSession
 	}
 	// Avoid a write per request: touch at most once per minute.
-	if now.Sub(sess.LastSeenAt) > time.Minute {
+	if touch && now.Sub(sess.LastSeenAt) > time.Minute {
 		_ = s.Q.TouchSession(ctx, h)
 	}
 	return &sess, nil

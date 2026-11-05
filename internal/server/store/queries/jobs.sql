@@ -87,3 +87,6 @@ RETURNING j.status;
 
 -- name: RequeueTarget :exec
 UPDATE job_targets SET status = 'queued', dispatched_at = NULL WHERE job_id = $1 AND host_id = $2 AND status = 'dispatched';
+
+-- name: DeleteOldJobOutput :execrows
+DELETE FROM job_output WHERE ts < now() - make_interval(days => sqlc.arg('days')::int);
