@@ -1,0 +1,201 @@
+# Stellwerk central stack (generated into /opt/stellwerk by install-central.sh).
+# Every image is pinned by digest (CLAUDE.md rule 10). Containers run as
+# non-root with a read-only root filesystem and no capabilities.
+#
+# Isolation: the signer has no network at all and only shares a unix
+# socket volume with the API; the job-signing key is mounted only there.
+
+name: stellwerk
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  restart: unless-stopped
+  tmpfs: ["/tmp:size=16m,mode=1777"]
+  logging:
+    driver: json-file
+    options: { max-size: "20m", max-file: "5" }
+
+x-server-env: &server-env
+  STELLWERK_DATABASE_URL_FILE: /run/secrets/db/dsn
+  STELLWERK_SECRETS_DIR: /var/lib/stellwerk/secrets
+  STELLWERK_DATA_DIR: /var/lib/stellwerk/data
+  STELLWERK_RUN_DIR: /run/stellwerk
+  STELLWERK_PUBLIC_URL: https://${STELLWERK_FQDN}
+  STELLWERK_AGENT_ENDPOINT: ${STELLWERK_AGENT_ENDPOINT}
+  STELLWERK_GATEWAY_SANS: ${STELLWERK_GATEWAY_SANS:-}
+  STELLWERK_VICTORIAMETRICS_URL: http://victoriametrics:8428
+  STELLWERK_TRUSTED_PROXIES: 172.30.10.0/24
+  STELLWERK_LOG_LEVEL: ${STELLWERK_LOG_LEVEL:-info}
+
+services:
+  caddy:
+    <<: *hardening
+    image: caddy:2.11.8-alpine@sha256:f6228111e5fafa1a5238258d0858e103f10599b8d1659a146e7726681a002bb9
+    cap_add: [NET_BIND_SERVICE]
+    ports:
+      - "443:443"
+      - "${STELLWERK_HTTP_PORT:-80}:80"
+    environment:
+      STELLWERK_FQDN: ${STELLWERK_FQDN}
+      STELLWERK_TLS: ${STELLWERK_TLS:-internal}
+      STELLWERK_ACME_EMAIL: ${STELLWERK_ACME_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [frontend]
+    depends_on: [api]
+
+  api:
+    <<: *hardening
+    image: ${STELLWERK_IMAGE:?set STELLWERK_IMAGE to the server image (with digest)}
+    command: ["api"]
+    user: "65532:65532"
+    environment:
+      <<: *server-env
+      STELLWERK_API_LISTEN: 0.0.0.0:8080
+    volumes:
+      - ./secrets/api:/var/lib/stellwerk/secrets/api:ro
+      - ./secrets/db:/run/secrets/db:ro
+      - ./data/recordings:/var/lib/stellwerk/data/recordings
+      - run:/run/stellwerk
+    networks:
+      frontend: { ipv4_address: 172.30.10.10 }
+      backend: {}
+    depends_on:
+      postgres: { condition: service_healthy }
+      signer: { condition: service_started }
+      gateway: { condition: service_started }
+
+  gateway:
+    <<: *hardening
+    image: ${STELLWERK_IMAGE}
+    command: ["gateway"]
+    user: "65532:65532"
+    environment:
+      <<: *server-env
+      STELLWERK_GATEWAY_LISTEN: 0.0.0.0:8443
+    ports:
+      - "${STELLWERK_AGENT_PORT:-8443}:8443"
+    volumes:
+      - ./secrets/gateway:/var/lib/stellwerk/secrets/gateway:ro
+      - ./secrets/db:/run/secrets/db:ro
+      - ./data/packages:/var/lib/stellwerk/data/packages:ro
+      - run:/run/stellwerk
+    networks: [backend, agents]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  signer:
+    <<: *hardening
+    image: ${STELLWERK_IMAGE}
+    command: ["signer"]
+    user: "65532:65532"
+    network_mode: none
+    environment:
+      STELLWERK_DATABASE_URL: "unused://signer-has-no-database"
+      STELLWERK_SECRETS_DIR: /var/lib/stellwerk/secrets
+      STELLWERK_DATA_DIR: /var/lib/stellwerk/data
+      STELLWERK_RUN_DIR: /run/stellwerk
+      STELLWERK_PUBLIC_URL: https://${STELLWERK_FQDN}
+      STELLWERK_AGENT_ENDPOINT: ${STELLWERK_AGENT_ENDPOINT}
+    volumes:
+      - ./secrets/signer:/var/lib/stellwerk/secrets/signer:ro
+      - ./data/signer:/var/lib/stellwerk/data/signer
+      - run:/run/stellwerk
+
+  postgres:
+    <<: *hardening
+    image: postgres:17.11-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    environment:
+      POSTGRES_USER: stellwerk
+      POSTGRES_DB: stellwerk
+      POSTGRES_PASSWORD_FILE: /run/secrets/db/password
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    tmpfs: ["/tmp:size=64m", "/var/run/postgresql:size=1m"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./secrets/db:/run/secrets/db:ro
+    networks: [backend]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "stellwerk", "-d", "stellwerk"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  victoriametrics:
+    <<: *hardening
+    image: victoriametrics/victoria-metrics:v1.155.0@sha256:f60dc268b54ecf87f6e09d740c2b732838aa9193090cc741417c9f6386a130df
+    command:
+      - -storageDataPath=/storage
+      - -retentionPeriod=${STELLWERK_METRICS_RETENTION:-30d}
+      - -httpListenAddr=:8428
+      - -search.maxQueryDuration=60s
+    volumes:
+      - vmdata:/storage
+    networks: [backend]
+
+  vmalert:
+    <<: *hardening
+    image: victoriametrics/vmalert:v1.155.0@sha256:3256cba5ddaca5974eae6141105cec4ce37871f1c213f0a5c267ec0111bc68e1
+    command:
+      - -datasource.url=http://victoriametrics:8428
+      - -remoteRead.url=http://victoriametrics:8428
+      - -remoteWrite.url=http://victoriametrics:8428
+      - -notifier.url=http://alertmanager:9093
+      - -rule=/etc/vmalert/*.yml
+      - -evaluationInterval=30s
+    volumes:
+      - ./vmalert:/etc/vmalert:ro
+    networks: [backend]
+    depends_on: [victoriametrics, alertmanager]
+
+  alertmanager:
+    <<: *hardening
+    image: prom/alertmanager:v0.34.2@sha256:39d8bb3966c694a124428a3a88fbcffd40bd069129ecd47c059f8a3f17c55f3b
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --cluster.listen-address=
+    volumes:
+      - ./alertmanager:/etc/alertmanager:ro
+      - ./secrets/alertmanager:/etc/alertmanager/secrets:ro
+      - amdata:/alertmanager
+    networks: [backend]
+
+  grafana:
+    <<: *hardening
+    profiles: ["grafana"]
+    image: grafana/grafana:12.4.14@sha256:ae509d9ae8c1021ca32ec370a9ca975d40165eda9fccd1e1102d317ff8787cd7
+    environment:
+      GF_SERVER_ROOT_URL: https://${STELLWERK_FQDN}/grafana/
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana/admin_password
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./secrets/grafana:/run/secrets/grafana:ro
+      - grafana-data:/var/lib/grafana
+    networks: [frontend, backend]
+
+networks:
+  frontend:
+    ipam:
+      config: [{ subnet: 172.30.10.0/24 }]
+  backend:
+    internal: true
+  agents: {}
+
+volumes:
+  pgdata: {}
+  vmdata: {}
+  amdata: {}
+  caddy-data: {}
+  caddy-config: {}
+  grafana-data: {}
+  run: {}

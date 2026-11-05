@@ -1,0 +1,50 @@
+[Unit]
+Description=Stellwerk agent (unprivileged core)
+Documentation=https://github.com/NoBrain-Soft/LibreManager
+After=network-online.target stellwerk-agent-helper.socket
+Wants=network-online.target stellwerk-agent-helper.socket
+ConditionPathExists=/var/lib/stellwerk-agent/agent.crt
+
+[Service]
+Type=simple
+User=stellwerk-agent
+Group=stellwerk-agent
+ExecStart=/usr/bin/stellwerk-agent run
+Restart=always
+RestartSec=5
+SyslogIdentifier=stellwerk-agent
+UMask=0077
+
+# Sandboxing (ARCHITECTURE.md §5.1)
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ReadWritePaths=/var/lib/stellwerk-agent
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+# adjtimex is needed read-only for the time-sync check (setting the clock
+# still requires CAP_SYS_TIME, which the core does not have).
+SystemCallFilter=@system-service adjtimex
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+LockPersonality=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+MemoryDenyWriteExecute=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectHostname=yes
+
+# Resource budget (G7)
+MemoryMax=64M
+CPUQuota=10%
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

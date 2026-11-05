@@ -1,0 +1,89 @@
+# Default alert rules (ARCHITECTURE.md §7.3). "Host down" is a state alert
+# raised by the gateway itself (no heartbeat for 2 min), not a metric rule.
+groups:
+  - name: stellwerk-host
+    interval: 30s
+    rules:
+      - alert: HighCPU
+        expr: 100 * (1 - sum by (host_id, hostname) (rate(stellwerk_cpu_seconds_total{mode="idle"}[5m])) / sum by (host_id, hostname) (rate(stellwerk_cpu_seconds_total[5m]))) > 90
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "CPU usage above 90% for 15 minutes on {{ $labels.hostname }}"
+
+      - alert: LowMemory
+        expr: 100 * stellwerk_memory_available_bytes / stellwerk_memory_total_bytes < 10
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Less than 10% memory available on {{ $labels.hostname }}"
+
+      - alert: DiskSpaceWarning
+        expr: 100 * (1 - stellwerk_filesystem_avail_bytes / stellwerk_filesystem_size_bytes) > 85 and stellwerk_filesystem_readonly == 0
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.mountpoint }} on {{ $labels.hostname }} is above 85%"
+
+      - alert: DiskSpaceCritical
+        expr: 100 * (1 - stellwerk_filesystem_avail_bytes / stellwerk_filesystem_size_bytes) > 95 and stellwerk_filesystem_readonly == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.mountpoint }} on {{ $labels.hostname }} is above 95%"
+
+      - alert: InodesLow
+        expr: 100 * (1 - stellwerk_filesystem_files_free / stellwerk_filesystem_files) > 90 and stellwerk_filesystem_files > 0
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Inode usage above 90% on {{ $labels.mountpoint }} ({{ $labels.hostname }})"
+
+      - alert: DiskWillFillIn24h
+        expr: predict_linear(stellwerk_filesystem_avail_bytes[6h], 24 * 3600) < 0 and stellwerk_filesystem_readonly == 0
+        for: 30m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.mountpoint }} on {{ $labels.hostname }} will fill within 24 h at the current rate"
+
+      - alert: HighIOWait
+        expr: 100 * sum by (host_id, hostname) (rate(stellwerk_cpu_seconds_total{mode="iowait"}[5m])) / sum by (host_id, hostname) (rate(stellwerk_cpu_seconds_total[5m])) > 30
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "High I/O wait on {{ $labels.hostname }}"
+
+      - alert: NetworkErrors
+        expr: sum by (host_id, hostname, device) (rate(stellwerk_network_receive_errs_total[5m]) + rate(stellwerk_network_transmit_errs_total[5m])) > 1
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "NIC errors on {{ $labels.device }} ({{ $labels.hostname }})"
+
+      - alert: SystemdUnitFailed
+        expr: stellwerk_systemd_units_failed > 0
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $value }} failed systemd unit(s) on {{ $labels.hostname }}"
+
+      - alert: ClockNotSynchronized
+        expr: stellwerk_time_sync_status == 0 or abs(stellwerk_time_offset_seconds) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Clock not synchronized or offset > 1 s on {{ $labels.hostname }} (signed jobs are refused)"
+
+      - alert: ProbeFailed
+        expr: stellwerk_probe_success == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "Probe {{ $labels.probe }} failing on {{ $labels.hostname }}"
+
+      - alert: ProbeCertificateExpiring
+        expr: stellwerk_probe_cert_expiry_seconds < 14 * 86400
+        for: 1h
+        labels: { severity: warning }
+        annotations:
+          summary: "TLS certificate for probe {{ $labels.probe }} expires in less than 14 days"

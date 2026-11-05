@@ -1,0 +1,30 @@
+[Unit]
+Description=Stellwerk agent helper (root, fixed RPC set)
+Documentation=https://github.com/NoBrain-Soft/LibreManager
+Requires=stellwerk-agent-helper.socket
+After=stellwerk-agent-helper.socket
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/stellwerk/stellwerk-agent-helper
+User=root
+StateDirectory=stellwerk-agent-helper
+StateDirectoryMode=0700
+SyslogIdentifier=stellwerk-agent-helper
+UMask=0077
+# Package managers and remote shells are children of the helper. Restarting
+# the helper (e.g. on upgrade) must not kill a running dpkg or a user's shell.
+KillMode=process
+# The helper runs package managers, systemctl and PTY shells, so it cannot
+# be sandboxed like the core. In particular NoNewPrivileges must stay off,
+# otherwise sudo inside remote shells would not work. Its attack surface is
+# the fixed, signature-verified RPC set instead.
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+LockPersonality=yes
+RestrictRealtime=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+
+[Install]
+Also=stellwerk-agent-helper.socket

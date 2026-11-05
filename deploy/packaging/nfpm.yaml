@@ -1,0 +1,46 @@
+# nfpm config for the agent package (.deb and .rpm).
+# Build with: make packages  (VERSION and ARCH are injected)
+name: stellwerk-agent
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+version_schema: semver
+release: "1"
+section: admin
+priority: optional
+maintainer: NoBrain-Soft
+description: |
+  Stellwerk agent: outbound-only monitoring and management agent with a
+  privilege-separated root helper. Opens no inbound ports.
+vendor: NoBrain-Soft
+homepage: https://github.com/NoBrain-Soft/LibreManager
+license: Proprietary (internal)
+
+contents:
+  - src: ./bin/linux_${ARCH}/stellwerk-agent
+    dst: /usr/bin/stellwerk-agent
+    file_info: { mode: 0755 }
+  - src: ./bin/linux_${ARCH}/stellwerk-agent-helper
+    dst: /usr/libexec/stellwerk/stellwerk-agent-helper
+    file_info: { mode: 0755 }
+  - src: ./deploy/packaging/systemd/stellwerk-agent.service
+    dst: /usr/lib/systemd/system/stellwerk-agent.service
+  - src: ./deploy/packaging/systemd/stellwerk-agent-helper.socket
+    dst: /usr/lib/systemd/system/stellwerk-agent-helper.socket
+  - src: ./deploy/packaging/systemd/stellwerk-agent-helper.service
+    dst: /usr/lib/systemd/system/stellwerk-agent-helper.service
+  - src: ./deploy/packaging/agent.yaml.default
+    dst: /usr/share/stellwerk/agent.yaml.default
+    file_info: { mode: 0644 }
+
+scripts:
+  preinstall: ./deploy/packaging/scripts/preinstall.sh
+  postinstall: ./deploy/packaging/scripts/postinstall.sh
+  preremove: ./deploy/packaging/scripts/preremove.sh
+  postremove: ./deploy/packaging/scripts/postremove.sh
+
+overrides:
+  deb:
+    depends: [systemd, ca-certificates, curl, openssl]
+  rpm:
+    depends: [systemd, ca-certificates, curl, openssl]
