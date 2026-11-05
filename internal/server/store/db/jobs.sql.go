@@ -58,7 +58,7 @@ func (q *Queries) CancelQueuedTargets(ctx context.Context, jobID uuid.UUID) ([]u
 
 const createJob = `-- name: CreateJob :one
 INSERT INTO jobs (id, type, params, requested_by, requested_by_name, approved_by)
-VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, type, params, requested_by, requested_by_name, approved_by, status, created_at, finished_at
+VALUES ($1, $2, $3, $4, $5, coalesce($6::text[], '{}')) RETURNING id, type, params, requested_by, requested_by_name, approved_by, status, created_at, finished_at
 `
 
 type CreateJobParams struct {
@@ -518,6 +518,20 @@ func (q *Queries) OpenTargets(ctx context.Context, jobID uuid.UUID) ([]uuid.UUID
 		return nil, err
 	}
 	return items, nil
+}
+
+const requeueTarget = `-- name: RequeueTarget :exec
+UPDATE job_targets SET status = 'queued', dispatched_at = NULL WHERE job_id = $1 AND host_id = $2 AND status = 'dispatched'
+`
+
+type RequeueTargetParams struct {
+	JobID  uuid.UUID
+	HostID uuid.UUID
+}
+
+func (q *Queries) RequeueTarget(ctx context.Context, arg RequeueTargetParams) error {
+	_, err := q.db.Exec(ctx, requeueTarget, arg.JobID, arg.HostID)
+	return err
 }
 
 const timeoutStaleTargets = `-- name: TimeoutStaleTargets :many

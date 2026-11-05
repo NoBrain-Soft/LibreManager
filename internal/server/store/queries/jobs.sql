@@ -1,6 +1,6 @@
 -- name: CreateJob :one
 INSERT INTO jobs (id, type, params, requested_by, requested_by_name, approved_by)
-VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+VALUES ($1, $2, $3, $4, $5, coalesce(sqlc.narg('approved_by')::text[], '{}')) RETURNING *;
 
 -- name: InsertJobTarget :exec
 INSERT INTO job_targets (job_id, host_id, signed_envelope, expires_at) VALUES ($1, $2, $3, $4);
@@ -84,3 +84,6 @@ FROM (
 ) agg
 WHERE j.id = $1 AND j.status = 'running' AND agg.open = 0
 RETURNING j.status;
+
+-- name: RequeueTarget :exec
+UPDATE job_targets SET status = 'queued', dispatched_at = NULL WHERE job_id = $1 AND host_id = $2 AND status = 'dispatched';
