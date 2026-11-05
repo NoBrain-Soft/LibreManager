@@ -1,0 +1,2 @@
+MAILTO = ops@example.com
+0 */12 * * * root test -x /usr/bin/certbot && perl -e 'sleep int(rand(43200))' && certbot -q renew

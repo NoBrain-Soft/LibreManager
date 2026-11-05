@@ -1,0 +1,27 @@
+processor	: 0
+vendor_id	: GenuineIntel
+model name	: Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz
+physical id	: 0
+core id		: 0
+cpu cores	: 2
+flags		: fpu vme de pse tsc msr hypervisor lm
+
+processor	: 1
+vendor_id	: GenuineIntel
+model name	: Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz
+physical id	: 0
+core id		: 1
+cpu cores	: 2
+flags		: fpu vme de pse tsc msr hypervisor lm
+
+processor	: 2
+model name	: Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz
+physical id	: 0
+core id		: 0
+flags		: fpu vme de pse tsc msr hypervisor lm
+
+processor	: 3
+model name	: Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz
+physical id	: 0
+core id		: 1
+flags		: fpu vme de pse tsc msr hypervisor lm
