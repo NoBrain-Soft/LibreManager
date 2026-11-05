@@ -225,7 +225,7 @@ func (c *ProbeCollector) Collect(ctx context.Context, emit func(Sample)) error {
 		st.lastRun = now
 		st.done = make(chan struct{})
 		waits = append(waits, st.done)
-		go c.run(st)
+		go c.run(st) //nolint:contextcheck // probes run on their own bounded timeouts
 	}
 	c.mu.Unlock()
 

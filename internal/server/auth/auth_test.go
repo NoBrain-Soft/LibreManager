@@ -93,7 +93,8 @@ func TestKeyedLimiter(t *testing.T) {
 	l := NewKeyedLimiter(60, 2)
 	now := time.Unix(0, 0)
 	l.now = func() time.Time { return now }
-	if !l.Allow("a") || !l.Allow("a") || l.Allow("a") {
+	a1, a2, a3 := l.Allow("a"), l.Allow("a"), l.Allow("a")
+	if !a1 || !a2 || a3 {
 		t.Fatal("burst not enforced")
 	}
 	if !l.Allow("b") {

@@ -40,7 +40,6 @@ type Recorder struct {
 	start     time.Time
 	buf       bytes.Buffer
 	n         uint64
-	hash      [sha256.Size]byte
 	h         interface {
 		io.Writer
 		Sum([]byte) []byte

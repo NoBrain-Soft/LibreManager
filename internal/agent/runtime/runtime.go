@@ -88,7 +88,7 @@ type Config struct {
 	Runner *jobs.Runner
 	// OnProbes is called when central sends a new probe configuration.
 	OnProbes func([]*agentv1.Probe)
-	Now    func() time.Time
+	Now      func() time.Time
 	// Backoff bounds (defaults 1 s → 5 min).
 	MinBackoff, MaxBackoff time.Duration
 }

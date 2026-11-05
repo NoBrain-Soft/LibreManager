@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nobrain-soft/libremanager/internal/common/ids"
 	"github.com/nobrain-soft/libremanager/internal/server/auth"
 	"github.com/nobrain-soft/libremanager/internal/server/rbac"
 	"github.com/nobrain-soft/libremanager/internal/server/store/db"
@@ -60,7 +59,7 @@ var anyStatePaths = map[string]bool{"/api/v1/auth/session": true, "/api/v1/auth/
 func (s *Server) middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		defer func() {
+		defer func() { //nolint:contextcheck // recovery logs with the request context
 			if rec := recover(); rec != nil {
 				slog.ErrorContext(r.Context(), "panic in handler", "panic", rec, "path", r.URL.Path)
 				writeError(w, http.StatusInternalServerError, "internal", "internal error")
@@ -129,7 +128,7 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 			}
 			ctx = context.WithValue(ctx, keyPrincipal, p)
 		}
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r.WithContext(ctx)) //nolint:contextcheck // ctx is derived from r.Context()
 		s.logRequest(r, start)
 	})
 }
@@ -239,6 +238,3 @@ func (s *Server) requireStepup(w http.ResponseWriter, r *http.Request) bool {
 	}
 	return true
 }
-
-// validUUID parses a path/query id defensively.
-func validUUID(s string) bool { return ids.Valid(s) }

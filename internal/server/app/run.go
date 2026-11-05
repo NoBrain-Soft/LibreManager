@@ -52,7 +52,7 @@ func RunSigner(ctx context.Context, cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	defer svc.Close()
+	defer func() { _ = svc.Close() }()
 	return signer.Serve(ctx, svc, cfg.SignerSocket())
 }
 
@@ -119,7 +119,7 @@ func RunGateway(ctx context.Context, cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	ln, err := net.Listen("tcp", cfg.GatewayListen)
+	ln, err := (&net.ListenConfig{}).Listen(ctx, "tcp", cfg.GatewayListen)
 	if err != nil {
 		return fmt.Errorf("gateway: listen: %w", err)
 	}

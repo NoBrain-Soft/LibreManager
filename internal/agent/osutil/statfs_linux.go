@@ -19,7 +19,7 @@ func Statfs(path string) (FSStats, error) {
 		bs = uint64(st.Bsize) //nolint:gosec // block sizes are positive
 	}
 	return FSStats{
-		Type:      int64(st.Type),
+		Type:      int64(st.Type), //nolint:unconvert // field type differs by GOARCH
 		BlockSize: bs,
 		Blocks:    st.Blocks,
 		Bfree:     st.Bfree,

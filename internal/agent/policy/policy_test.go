@@ -246,7 +246,8 @@ func TestLoadRequiresRootOwnership(t *testing.T) {
 func TestRateLimiter(t *testing.T) {
 	now := time.Unix(1000, 0)
 	r := NewRateLimiter(2, func() time.Time { return now })
-	if !r.Allow() || !r.Allow() {
+	first, second := r.Allow(), r.Allow()
+	if !first || !second {
 		t.Fatal("within limit denied")
 	}
 	if r.Allow() {

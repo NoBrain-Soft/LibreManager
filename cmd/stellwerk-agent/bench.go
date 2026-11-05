@@ -11,10 +11,11 @@ import (
 	"syscall"
 	"time"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/nobrain-soft/libremanager/internal/agent/collect"
 	"github.com/nobrain-soft/libremanager/internal/agent/inventory"
 	"github.com/nobrain-soft/libremanager/internal/agent/spool"
-	"google.golang.org/protobuf/proto"
 )
 
 // Budget (CLAUDE.md, G7).
@@ -71,7 +72,7 @@ func bench(ctx context.Context, dur, interval time.Duration) error {
 	if err != nil {
 		return err
 	}
-	defer sp.Close()
+	defer func() { _ = sp.Close() }()
 	cs := collect.DefaultCollectors(collect.Options{})
 	enc := collect.NewEncoder(10000)
 	ps := collect.NewProcSampler("/proc")

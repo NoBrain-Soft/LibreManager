@@ -91,7 +91,7 @@ func Handler(params func() (Params, error), packagesDir string) http.Handler {
 			return
 		}
 		path := filepath.Join(packagesDir, name)
-		f, err := os.Open(filepath.Clean(path))
+		f, err := os.Open(filepath.Clean(path)) //nolint:gosec // name validated by packageFile regex
 		if err != nil {
 			http.NotFound(w, r)
 			return

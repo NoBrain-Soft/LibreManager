@@ -11,3 +11,6 @@ func mustSub(f fs.FS, dir string) fs.FS {
 	}
 	return sub
 }
+
+// Migrations returns the embedded migration files (for tests and tooling).
+func Migrations() fs.FS { return mustSub(migrations, "migrations") }

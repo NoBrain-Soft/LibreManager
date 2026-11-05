@@ -85,7 +85,7 @@ func FromEnv() (*Config, error) {
 // Validate checks consistency.
 func (c *Config) Validate() error {
 	u, err := url.Parse(c.PublicURL)
-	if err != nil || (u.Scheme != "https" && !(u.Scheme == "http" && isLocalhost(u.Hostname()))) || u.Host == "" {
+	if err != nil || u.Host == "" || (u.Scheme != "https" && (u.Scheme != "http" || !isLocalhost(u.Hostname()))) {
 		return errors.New("config: STELLWERK_PUBLIC_URL must be an https:// URL (http only for localhost)")
 	}
 	if _, _, err := net.SplitHostPort(c.AgentEndpoint); err != nil {
@@ -133,7 +133,7 @@ func env(k, def string) string {
 // secretOrEnv reads K_FILE if set, else K.
 func secretOrEnv(k string) (string, error) {
 	if f := os.Getenv(k + "_FILE"); f != "" {
-		b, err := os.ReadFile(filepath.Clean(f))
+		b, err := os.ReadFile(filepath.Clean(f)) //nolint:gosec // operator-provided secret file path
 		if err != nil {
 			return "", fmt.Errorf("config: %s_FILE: %w", k, err)
 		}

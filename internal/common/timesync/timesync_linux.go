@@ -14,5 +14,5 @@ func query() (Status, error) {
 	if err != nil {
 		return Status{}, fmt.Errorf("timesync: adjtimex: %w", err)
 	}
-	return Status{State: state, Flags: int64(tx.Status), Offset: int64(tx.Offset)}, nil
+	return Status{State: state, Flags: int64(tx.Status), Offset: int64(tx.Offset)}, nil //nolint:unconvert // field type differs by GOARCH
 }

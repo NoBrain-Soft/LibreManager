@@ -110,7 +110,7 @@ func WriteHostID(p Paths, hostID string) error {
 	if !ids.Valid(hostID) {
 		return errors.New("state: invalid host id")
 	}
-	if err := os.MkdirAll(filepath.Dir(p.HostIDFile), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(p.HostIDFile), 0o755); err != nil { //nolint:gosec // /etc/stellwerk is world-readable by design
 		return fmt.Errorf("state: %w", err)
 	}
 	return writeAtomic(p.HostIDFile, []byte(hostID+"\n"), 0o644)
@@ -131,7 +131,7 @@ func ReadHostID(p Paths) (string, error) {
 
 // WriteJobKeys pins job-signing public keys (enrollment, as root).
 func WriteJobKeys(p Paths, keys map[string][]byte) error {
-	if err := os.MkdirAll(p.JobKeysDir, 0o755); err != nil {
+	if err := os.MkdirAll(p.JobKeysDir, 0o755); err != nil { //nolint:gosec // public keys, root-owned
 		return fmt.Errorf("state: %w", err)
 	}
 	for id, pub := range keys {

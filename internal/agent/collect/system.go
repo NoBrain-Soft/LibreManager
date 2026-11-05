@@ -83,7 +83,7 @@ func (c *systemdCollector) Collect(ctx context.Context, emit func(Sample)) error
 func (c *systemdCollector) refresh(ctx context.Context) error {
 	if _, err := os.Stat(filepath.Join(c.rootFS, "run", "systemd", "system")); err != nil {
 		c.have = false
-		return nil
+		return nil //nolint:nilerr // no systemd on this host: nothing to collect
 	}
 	out, err := c.exec.Run(ctx, "systemctl", "list-units", "--state=failed", "--plain", "--no-legend", "--no-pager")
 	if err != nil {

@@ -235,7 +235,7 @@ func Verify(ctx context.Context, q *db.Queries) (VerifyResult, error) {
 			}
 			details, err := Canonicalize(r.Details)
 			if err != nil {
-				return fail(res, r.ID, "details not canonicalizable"), nil
+				return fail(res, r.ID, "details not canonicalizable"), nil //nolint:nilerr // reported as a verification failure
 			}
 			h, err := Hash(prev, r.Ts, r.Actor, r.ActorIp, r.Action, r.Target, details)
 			if err != nil {

@@ -324,11 +324,11 @@ func Serve(ctx context.Context, svc *Service, path string) error {
 		return fmt.Errorf("signer: %w", err)
 	}
 	_ = os.Remove(path)
-	ln, err := net.Listen("unix", path)
+	ln, err := (&net.ListenConfig{}).Listen(ctx, "unix", path)
 	if err != nil {
 		return fmt.Errorf("signer: listen: %w", err)
 	}
-	if err := os.Chmod(path, 0o660); err != nil {
+	if err := os.Chmod(path, 0o660); err != nil { //nolint:gosec // socket shared with the API container's group
 		_ = ln.Close()
 		return fmt.Errorf("signer: chmod: %w", err)
 	}

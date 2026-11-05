@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -166,7 +167,7 @@ func scanSocketTable(r io.Reader, fn func(state int, remote []byte)) error {
 		}
 		header = false
 		if err != nil {
-			if err == io.EOF || err == bufio.ErrBufferFull {
+			if errors.Is(err, io.EOF) || errors.Is(err, bufio.ErrBufferFull) {
 				return nil
 			}
 			return fmt.Errorf("read socket table: %w", err)

@@ -16,6 +16,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -89,8 +90,9 @@ func main() {
 		usage()
 	}
 	if err != nil {
-		slog.Error(cmd+" failed", "err", err)
-		os.Exit(1)
+		slog.Error("command failed", "command", cmd, "err", err)
+		stop()
+		os.Exit(1) //nolint:gocritic // stop() was called explicitly
 	}
 }
 
@@ -129,16 +131,16 @@ func run(ctx context.Context, cfgPath string) error {
 	if err != nil {
 		return err
 	}
-	defer nonces.Close()
+	defer func() { _ = nonces.Close() }()
 	sp, err := spool.Open(paths.SpoolDir(), pol.Spool.MaxBytes, pol.Spool.MaxAge)
 	if err != nil {
 		return err
 	}
-	defer sp.Close()
+	defer func() { _ = sp.Close() }()
 
 	hc := &helperclient.Client{SocketPath: pol.HelperSocket}
 	jr := journal.New("stellwerk-agent")
-	defer jr.Close()
+	defer func() { _ = jr.Close() }()
 	helperUp := func(ctx context.Context) bool {
 		pctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
@@ -221,18 +223,25 @@ func doEnroll(ctx context.Context, cfgPath string, tokenStdin bool) error {
 }
 
 // chownToAgent gives the state directory to the stellwerk-agent user.
+// Traversal is confined with os.Root so symlinks cannot redirect it.
 func chownToAgent(dir string) error {
 	u, err := user.Lookup("stellwerk-agent")
 	if err != nil {
-		return nil //nolint:nilerr // dev installs without the system user keep root ownership
+		slog.Warn("user stellwerk-agent not found; state stays root-owned (development install?)")
+		return nil
 	}
 	uid, _ := strconv.Atoi(u.Uid)
 	gid, _ := strconv.Atoi(u.Gid)
-	return filepath.WalkDir(dir, func(p string, _ os.DirEntry, err error) error {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = root.Close() }()
+	return fs.WalkDir(root.FS(), ".", func(p string, _ fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		return os.Lchown(p, uid, gid)
+		return root.Lchown(p, uid, gid)
 	})
 }
 

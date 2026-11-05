@@ -117,7 +117,7 @@ func (c *Collector) Certificates(_ context.Context) (*agentv1.InventorySection, 
 			scanned++
 			cert, err := c.readCert(p, filepath.Join(dir, rel))
 			if err != nil || cert == nil || seen[cert.GetSha256Fingerprint()] {
-				return nil
+				return nil //nolint:nilerr // unreadable/non-certificate files are skipped
 			}
 			seen[cert.GetSha256Fingerprint()] = true
 			certs = append(certs, cert)

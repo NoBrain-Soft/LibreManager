@@ -84,7 +84,7 @@ func (r ExecRunner) Run(ctx context.Context, name string, args ...string) ([]byt
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, path, args...)
+	cmd := exec.CommandContext(ctx, path, args...) //nolint:gosec // fixed binary list, argv only, no shell
 	cmd.Env = commandEnv
 	cmd.Dir = "/"
 	stdout := &limitWriter{max: limit, onOverflow: cancel}

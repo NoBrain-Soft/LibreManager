@@ -96,6 +96,7 @@ func main() {
 	}
 	if err != nil {
 		slog.Error("exiting", "role", role, "err", err)
-		os.Exit(1)
+		stop()
+		os.Exit(1) //nolint:gocritic // stop() was called explicitly
 	}
 }
