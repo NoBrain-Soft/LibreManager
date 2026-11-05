@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package stellwerk.agent.v1;
+
+option go_package = "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/agent/v1;agentv1";
+
+// MetricsBatch carries one collection round.
+//
+// Delta-friendly encoding: series are defined once per Connect stream via
+// SeriesDef (id -> name + labels) and afterwards referenced by id only.
+// Batches replayed from the offline spool (replay = true) are self-contained:
+// their ids are resolved only against the defs in the same batch.
+//
+// The gateway NEVER trusts agent-supplied identity labels: host_id, hostname
+// and group labels are added server-side, and agent labels with those names
+// are dropped.
+message MetricsBatch {
+  int64 timestamp_ms = 1;
+  repeated SeriesDef defs = 2;
+  repeated Point points = 3;
+  bool replay = 4;
+}
+
+message SeriesDef {
+  uint32 id = 1;
+  // Prometheus-style metric name, prefixed "stellwerk_".
+  string name = 2;
+  repeated Label labels = 3;
+}
+
+message Label {
+  string name = 1;
+  string value = 2;
+}
+
+message Point {
+  uint32 series_id = 1;
+  double value = 2;
+  // Optional per-point timestamp; 0 = batch timestamp.
+  int64 timestamp_ms = 3;
+}
+
+// Top-N processes, sent every 60 s (not stored as metric series).
+message ProcessSnapshot {
+  int64 timestamp_ms = 1;
+  uint32 total = 2;
+  repeated ProcessInfo top = 3;
+}
+
+message ProcessInfo {
+  int32 pid = 1;
+  string name = 2;
+  string user = 3;
+  double cpu_percent = 4;
+  uint64 rss_bytes = 5;
+  // Truncated to 256 bytes.
+  string cmdline = 6;
+  string state = 7;
+}

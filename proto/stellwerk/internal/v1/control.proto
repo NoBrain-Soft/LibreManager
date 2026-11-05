@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package stellwerk.internal.v1;
+
+import "stellwerk/agent/v1/gateway.proto";
+import "stellwerk/agent/v1/job.proto";
+
+option go_package = "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/internal/v1;internalv1";
+
+// Services between central components. They are only ever served on unix
+// sockets inside a shared volume (never on a network listener).
+
+// SignerService is served by `stellwerk-server signer`, the only process that
+// holds the job-signing private key (CLAUDE.md rule 4).
+service SignerService {
+  // Sign one envelope per target host. The signer validates the action,
+  // sets nonce and validity window itself, enforces rate limits and target
+  // caps, and logs every signature to its own append-only log.
+  rpc SignJobs(SignJobsRequest) returns (SignJobsResponse);
+  // Public keys of the active signing keys.
+  rpc ListKeys(ListKeysRequest) returns (ListKeysResponse);
+}
+
+message SignJobsRequest {
+  // Template: job_id, requested_by, approved_by and action are taken from
+  // here; host_id, nonce, not_before and expires_at are set by the signer.
+  stellwerk.agent.v1.Job template = 1;
+  repeated string host_ids = 2;
+  // Requested validity in seconds (capped by the signer).
+  uint32 ttl_s = 3;
+  // Unix seconds; 0 = now.
+  int64 not_before = 4;
+}
+
+message SignJobsResponse {
+  repeated SignedEnvelope envelopes = 1;
+}
+
+message SignedEnvelope {
+  string host_id = 1;
+  stellwerk.agent.v1.SignedJob signed = 2;
+}
+
+message ListKeysRequest {}
+
+message ListKeysResponse {
+  repeated stellwerk.agent.v1.JobKey keys = 1;
+}
+
+// GatewayControlService is served by `stellwerk-server gateway` for the API.
+service GatewayControlService {
+  // Relay one shell session between the API (browser side) and the agent's
+  // ShellSession stream. The first message must be an Attach.
+  rpc ShellRelay(stream ShellRelayRequest) returns (stream ShellRelayResponse);
+  // Push a cancel to a connected agent.
+  rpc CancelJob(CancelJobRequest) returns (CancelJobResponse);
+  // Which hosts are currently connected to this gateway.
+  rpc ListConnected(ListConnectedRequest) returns (ListConnectedResponse);
+}
+
+message ShellRelayRequest {
+  oneof payload {
+    ShellRelayAttach attach = 1;
+    bytes input = 2;
+    stellwerk.agent.v1.ShellResize resize = 3;
+    stellwerk.agent.v1.ShellClose close = 4;
+  }
+}
+
+message ShellRelayAttach {
+  string session_id = 1;
+  string host_id = 2;
+  // Envelope with the ShellGrant, delivered to the agent by the gateway.
+  stellwerk.agent.v1.SignedJob grant = 3;
+}
+
+message ShellRelayResponse {
+  oneof payload {
+    // Agent attached its ShellSession stream; I/O can flow.
+    ShellRelayReady ready = 1;
+    bytes output = 2;
+    stellwerk.agent.v1.ShellExit exit = 3;
+  }
+}
+
+message ShellRelayReady {}
+
+message CancelJobRequest {
+  string host_id = 1;
+  string job_id = 2;
+}
+
+message CancelJobResponse {
+  bool delivered = 1;
+}
+
+message ListConnectedRequest {}
+
+message ListConnectedResponse {
+  repeated ConnectedAgent agents = 1;
+}
+
+message ConnectedAgent {
+  string host_id = 1;
+  int64 connected_at_ms = 2;
+  string remote_addr = 3;
+  string agent_version = 4;
+}

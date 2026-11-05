@@ -1,0 +1,218 @@
+syntax = "proto3";
+
+package stellwerk.agent.v1;
+
+option go_package = "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/agent/v1;agentv1";
+
+// SignedJob is the only way an action reaches an agent (ARCHITECTURE.md §6.3).
+//
+// sig = Ed25519(domain || 0x00 || job) with domain "stellwerk-job-v1".
+// The verifier checks the signature over the *exact* bytes in `job` and only
+// then parses them, so encoding determinism is not required for security.
+message SignedJob {
+  // Serialized Job message.
+  bytes job = 1;
+  // Identifier of the signing key (hex SHA-256 prefix of the public key).
+  string key_id = 2;
+  // Ed25519 signature.
+  bytes sig = 3;
+}
+
+message Job {
+  // UUIDv7.
+  string job_id = 1;
+  // Exactly one target host per envelope (UUID).
+  string host_id = 2;
+  // Unix seconds.
+  int64 not_before = 3;
+  // Unix seconds. Signer caps the window (default 10 min).
+  int64 expires_at = 4;
+  // 16 random bytes, unique per envelope.
+  bytes nonce = 5;
+  // Stellwerk username of the requester (informational on the host, logged to journald).
+  string requested_by = 6;
+  repeated string approved_by = 7;
+
+  oneof action {
+    PkgRefresh pkg_refresh = 10;
+    PkgUpgrade pkg_upgrade = 11;
+    ServiceAction service = 12;
+    Reboot reboot = 13;
+    ShellGrant shell = 14;
+    RunCheck run_check = 15;
+    RunScript script = 16;
+    AgentUpdate agent_update = 17;
+    FileRead file_read = 18;
+    ProbeConfig probe_config = 19;
+    PkgInstall pkg_install = 20;
+    PkgRemove pkg_remove = 21;
+    CollectInventory collect_inventory = 22;
+  }
+}
+
+// Refresh package lists (apt-get update / dnf makecache). Low risk.
+message PkgRefresh {}
+
+enum UpgradeScope {
+  UPGRADE_SCOPE_UNSPECIFIED = 0;
+  UPGRADE_SCOPE_ALL = 1;
+  UPGRADE_SCOPE_SECURITY = 2;
+  UPGRADE_SCOPE_NAMED = 3;
+}
+
+// Upgrade packages. Medium risk.
+message PkgUpgrade {
+  UpgradeScope scope = 1;
+  // Only for UPGRADE_SCOPE_NAMED.
+  repeated string packages = 2;
+}
+
+// Install packages. High risk; disabled by default in local policy.
+message PkgInstall {
+  repeated string packages = 1;
+}
+
+// Remove packages. High risk; disabled by default in local policy.
+message PkgRemove {
+  repeated string packages = 1;
+}
+
+enum ServiceOp {
+  SERVICE_OP_UNSPECIFIED = 0;
+  SERVICE_OP_START = 1;
+  SERVICE_OP_STOP = 2;
+  SERVICE_OP_RESTART = 3;
+  SERVICE_OP_RELOAD = 4;
+  SERVICE_OP_ENABLE = 5;
+  SERVICE_OP_DISABLE = 6;
+}
+
+// Control a systemd unit. Medium risk.
+message ServiceAction {
+  string unit = 1;
+  ServiceOp op = 2;
+}
+
+// Reboot the host. Medium risk.
+message Reboot {
+  // Delay before reboot in seconds (0 = immediately, max 3600).
+  uint32 delay_s = 1;
+  string message = 2;
+}
+
+// Grant to open one interactive shell session (ARCHITECTURE.md §6.5). High risk.
+message ShellGrant {
+  // UUIDv7, also the id of the ShellSession stream.
+  string session_id = 1;
+  // Local unix account the PTY is spawned as.
+  string unix_user = 2;
+  uint32 cols = 3;
+  uint32 rows = 4;
+  uint32 max_duration_s = 5;
+  uint32 idle_timeout_s = 6;
+  bool record = 7;
+}
+
+// Run built-in security checks now. Low risk.
+message RunCheck {
+  // Empty = all enabled checks.
+  repeated string check_ids = 1;
+}
+
+// Run a script from the signed library (Phase 5). High risk; off by default.
+message RunScript {
+  string script_id = 1;
+  bytes content = 2;
+  bytes content_sha256 = 3;
+  string interpreter = 4;
+  repeated string args = 5;
+  uint32 timeout_s = 6;
+}
+
+// Install a new agent version (Phase 5).
+message AgentUpdate {
+  string version = 1;
+  // Path below the gateway's /install/ tree.
+  string package_path = 2;
+  bytes package_sha256 = 3;
+  // Release signature over the package (offline release key).
+  bytes release_signature = 4;
+}
+
+// Read an allow-listed file. Low risk (still subject to local file_read policy).
+message FileRead {
+  string path = 1;
+  uint64 max_bytes = 2;
+}
+
+// Replace the set of local probes the agent executes.
+message ProbeConfig {
+  repeated Probe probes = 1;
+}
+
+// Collect and report inventory now. Low risk.
+message CollectInventory {}
+
+enum ProbeKind {
+  PROBE_KIND_UNSPECIFIED = 0;
+  PROBE_KIND_TCP = 1;
+  PROBE_KIND_HTTP = 2;
+  PROBE_KIND_PROCESS = 3;
+  PROBE_KIND_UNIT = 4;
+}
+
+message Probe {
+  string name = 1;
+  ProbeKind kind = 2;
+  // host:port for TCP, URL for HTTP, process name, or unit name.
+  string target = 3;
+  uint32 interval_s = 4;
+  uint32 timeout_ms = 5;
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_SUCCEEDED = 1;
+  JOB_STATUS_FAILED = 2;
+  // Rejected by agent core or helper (signature, host, window, replay, policy, rate limit).
+  JOB_STATUS_REJECTED = 3;
+  JOB_STATUS_CANCELED = 4;
+  JOB_STATUS_TIMED_OUT = 5;
+}
+
+enum OutputStream {
+  OUTPUT_STREAM_UNSPECIFIED = 0;
+  OUTPUT_STREAM_STDOUT = 1;
+  OUTPUT_STREAM_STDERR = 2;
+  OUTPUT_STREAM_INFO = 3;
+}
+
+// Agent -> central: progress of a job.
+message JobEvent {
+  string job_id = 1;
+  int64 timestamp_ms = 2;
+  oneof event {
+    JobStarted started = 10;
+    JobOutput output = 11;
+    JobFinished finished = 12;
+  }
+}
+
+message JobStarted {}
+
+message JobOutput {
+  OutputStream stream = 1;
+  // Chunk of output (agent truncates each chunk to 32 KiB).
+  bytes data = 2;
+}
+
+message JobFinished {
+  JobStatus status = 1;
+  int32 exit_code = 2;
+  string message = 3;
+}
+
+// Central -> agent: cancel a running job.
+message CancelJob {
+  string job_id = 1;
+}
