@@ -1,0 +1,27 @@
+# Development dependencies for `make dev`: PostgreSQL and VictoriaMetrics
+# published on localhost only. The server and web dev server run natively.
+name: stellwerk-dev
+
+services:
+  postgres:
+    image: postgres:17.11-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+    environment:
+      POSTGRES_USER: stellwerk
+      POSTGRES_PASSWORD: stellwerk-dev
+      POSTGRES_DB: stellwerk
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "stellwerk"]
+      interval: 3s
+      retries: 20
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.155.0@sha256:f60dc268b54ecf87f6e09d740c2b732838aa9193090cc741417c9f6386a130df
+    command: ["-storageDataPath=/storage", "-retentionPeriod=7d", "-httpListenAddr=:8428"]
+    ports: ["127.0.0.1:8428:8428"]
+    volumes: [vmdata:/storage]
+
+volumes:
+  pgdata: {}
+  vmdata: {}

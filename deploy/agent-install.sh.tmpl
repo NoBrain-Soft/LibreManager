@@ -1,0 +1,80 @@
+#!/bin/sh
+# Stellwerk agent installer — rendered by the central server.
+# Usage: printf '%s' "$TOKEN" | sudo sh stellwerk-install.sh --token-stdin
+#
+# The enrollment token is read from stdin (never argv) so it does not show
+# up in `ps` or shell history. Every download is verified against the
+# pinned Stellwerk root CA; nothing is fetched without TLS verification.
+set -eu
+
+CENTRAL='{{.AgentEndpoint}}'
+CA_FINGERPRINT='{{.CAFingerprint}}'
+BASE="https://${CENTRAL}/install"
+
+die() { echo "stellwerk-install: $*" >&2; exit 1; }
+
+[ "$(id -u)" -eq 0 ] || die "must run as root"
+TOKEN_STDIN=0
+for a in "$@"; do
+  case "$a" in
+    --token-stdin) TOKEN_STDIN=1 ;;
+    *) die "unknown argument: $a" ;;
+  esac
+done
+[ "$TOKEN_STDIN" -eq 1 ] || die "pass the enrollment token on stdin with --token-stdin"
+TOKEN=$(head -c 512)
+case "$TOKEN" in swk_enr_*) ;; *) die "invalid enrollment token" ;; esac
+
+WORK=$(mktemp -d /tmp/stellwerk-install.XXXXXX)
+trap 'rm -rf "$WORK"' EXIT INT TERM
+umask 077
+
+cat > "$WORK/ca.pem" <<'CAEOF'
+{{.CAPEM}}CAEOF
+
+# Verify the pinned root before using it.
+FP=$(openssl x509 -in "$WORK/ca.pem" -noout -fingerprint -sha256 2>/dev/null | sed 's/^.*=//')
+[ "$FP" = "$CA_FINGERPRINT" ] || die "CA fingerprint mismatch (got $FP)"
+
+fetch() { curl -fsS --proto '=https' --tlsv1.3 --cacert "$WORK/ca.pem" -o "$2" "$BASE/$1"; }
+
+ARCH=$(uname -m)
+case "$ARCH" in
+  x86_64|amd64) DEB_ARCH=amd64; RPM_ARCH=x86_64 ;;
+  aarch64|arm64) DEB_ARCH=arm64; RPM_ARCH=aarch64 ;;
+  *) die "unsupported architecture $ARCH" ;;
+esac
+
+. /etc/os-release
+FAMILY=""
+for id in $ID ${ID_LIKE:-}; do
+  case "$id" in
+    debian|ubuntu) FAMILY=deb; break ;;
+    rhel|centos|fedora|rocky|almalinux) FAMILY=rpm; break ;;
+  esac
+done
+[ -n "$FAMILY" ] || die "unsupported distribution $ID"
+
+if [ "$FAMILY" = deb ]; then PKG="stellwerk-agent_latest_${DEB_ARCH}.deb"; else PKG="stellwerk-agent-latest.${RPM_ARCH}.rpm"; fi
+fetch "packages/$PKG" "$WORK/$PKG"
+fetch "packages/$PKG.sha256" "$WORK/$PKG.sha256"
+(cd "$WORK" && sha256sum -c "$PKG.sha256" >/dev/null) || die "package checksum mismatch"
+
+if [ "$FAMILY" = deb ]; then
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -q "$WORK/$PKG" >/dev/null || dpkg -i "$WORK/$PKG"
+else
+  if command -v dnf >/dev/null 2>&1; then dnf -y -q install "$WORK/$PKG"; else rpm -U --replacepkgs "$WORK/$PKG"; fi
+fi
+
+install -d -m 0755 /etc/stellwerk
+install -m 0644 "$WORK/ca.pem" /etc/stellwerk/ca.pem
+if [ ! -f /etc/stellwerk/agent.yaml ]; then
+  sed -e "s|@CENTRAL@|$CENTRAL|" -e "s|@CA_FINGERPRINT@|$CA_FINGERPRINT|" \
+    /usr/share/stellwerk/agent.yaml.default > /etc/stellwerk/agent.yaml
+  chmod 0644 /etc/stellwerk/agent.yaml
+fi
+
+printf '%s' "$TOKEN" | /usr/bin/stellwerk-agent enroll --token-stdin
+systemctl daemon-reload
+systemctl enable --now stellwerk-agent-helper.socket stellwerk-agent.service
+echo "stellwerk-install: agent enrolled and running"

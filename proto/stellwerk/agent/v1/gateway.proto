@@ -1,0 +1,171 @@
+syntax = "proto3";
+
+package stellwerk.agent.v1;
+
+import "stellwerk/agent/v1/inventory.proto";
+import "stellwerk/agent/v1/job.proto";
+import "stellwerk/agent/v1/metrics.proto";
+
+option go_package = "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/agent/v1;agentv1";
+
+// GatewayService is served by `stellwerk-server gateway` on :8443 (TLS 1.3).
+//
+// Enroll is the only RPC that accepts a connection without a client
+// certificate. Every other RPC requires a valid agent certificate issued by
+// the agent intermediate CA, whose URI SAN spiffe://stellwerk/host/<uuid>
+// is the *only* source of host identity.
+service GatewayService {
+  // Exchange a one-time enrollment token + CSR for a client certificate.
+  rpc Enroll(EnrollRequest) returns (EnrollResponse);
+  // Long-lived control stream. The first agent message must be Hello.
+  rpc Connect(stream ConnectRequest) returns (stream ConnectResponse);
+  // Renew the client certificate over the existing mTLS identity.
+  rpc Renew(RenewRequest) returns (RenewResponse);
+  // Dedicated stream for one interactive shell session.
+  rpc ShellSession(stream ShellSessionRequest) returns (stream ShellSessionResponse);
+}
+
+message EnrollRequest {
+  // Enrollment token (swk_enr_...). Only its hash is stored centrally.
+  string token = 1;
+  // PKCS#10 CSR (DER). Only the public key is used; subject and SANs are
+  // ignored and replaced server-side.
+  bytes csr_der = 2;
+  HostFacts facts = 3;
+}
+
+message HostFacts {
+  string hostname = 1;
+  string fqdn = 2;
+  string os_family = 3;
+  string os_id = 4;
+  string os_version = 5;
+  string kernel = 6;
+  string arch = 7;
+  string agent_version = 8;
+  string machine_id = 9;
+}
+
+message EnrollResponse {
+  string host_id = 1;
+  // Leaf first, then intermediate(s). DER.
+  repeated bytes cert_chain_der = 2;
+  // Job-signing public keys the agent pins.
+  repeated JobKey job_keys = 3;
+  AgentSettings settings = 4;
+}
+
+message JobKey {
+  string key_id = 1;
+  // Ed25519 public key (32 bytes).
+  bytes public_key = 2;
+}
+
+// Centrally managed, non-security-sensitive settings. Anything that widens
+// what the agent may do lives in local policy, never here.
+message AgentSettings {
+  uint32 metrics_interval_s = 1;
+  uint32 inventory_interval_s = 2;
+  uint32 processes_interval_s = 3;
+  uint32 updates_check_interval_s = 4;
+  uint32 checks_interval_s = 5;
+  repeated Probe probes = 6;
+}
+
+message ConnectRequest {
+  oneof payload {
+    Hello hello = 1;
+    Heartbeat heartbeat = 2;
+    MetricsBatch metrics = 3;
+    InventoryReport inventory = 4;
+    JobEvent job_event = 5;
+    ProcessSnapshot processes = 6;
+    UpdatesReport updates = 7;
+    CheckReport checks = 8;
+  }
+}
+
+message Hello {
+  string agent_version = 1;
+  HostFacts facts = 2;
+  // /proc/sys/kernel/random/boot_id, detects reboots.
+  string boot_id = 3;
+  int64 agent_time_ms = 4;
+  PolicySummary policy = 5;
+  bool helper_available = 6;
+}
+
+message Heartbeat {
+  int64 agent_time_ms = 1;
+  // Number of metric batches currently buffered in the spool.
+  uint32 spool_batches = 2;
+  uint32 running_jobs = 3;
+}
+
+message ConnectResponse {
+  oneof payload {
+    Welcome welcome = 1;
+    SignedJob job = 2;
+    CancelJob cancel_job = 3;
+    AgentSettings settings = 4;
+    HeartbeatAck heartbeat_ack = 5;
+  }
+}
+
+message Welcome {
+  string host_id = 1;
+  int64 server_time_ms = 2;
+  AgentSettings settings = 3;
+  // Renew when less than this many seconds of validity remain.
+  int64 renew_before_s = 4;
+}
+
+message HeartbeatAck {
+  int64 server_time_ms = 1;
+}
+
+message RenewRequest {
+  // New CSR (new key pair generated on host).
+  bytes csr_der = 1;
+}
+
+message RenewResponse {
+  repeated bytes cert_chain_der = 1;
+}
+
+message ShellSessionRequest {
+  oneof payload {
+    // First message: binds this stream to a granted session.
+    ShellAttach attach = 1;
+    // PTY output.
+    bytes output = 2;
+    ShellExit exit = 3;
+  }
+}
+
+message ShellAttach {
+  string session_id = 1;
+}
+
+message ShellExit {
+  int32 exit_code = 1;
+  string reason = 2;
+}
+
+message ShellSessionResponse {
+  oneof payload {
+    // Keystrokes from the browser.
+    bytes input = 1;
+    ShellResize resize = 2;
+    ShellClose close = 3;
+  }
+}
+
+message ShellResize {
+  uint32 cols = 1;
+  uint32 rows = 2;
+}
+
+message ShellClose {
+  string reason = 1;
+}

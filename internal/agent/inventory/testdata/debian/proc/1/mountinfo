@@ -1,0 +1,4 @@
+23 28 0:22 / /proc rw,nosuid,nodev,noexec,relatime shared:13 - proc proc rw
+28 1 253:0 / / rw,relatime shared:1 - ext4 /dev/mapper/vg0-root rw,errors=remount-ro
+30 28 252:1 / /boot rw,relatime shared:30 - ext4 /dev/vda1 rw
+32 28 0:30 / /run rw,nosuid,nodev,noexec,relatime shared:5 - tmpfs tmpfs rw,size=1633740k,mode=755

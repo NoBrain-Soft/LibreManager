@@ -1,0 +1,15 @@
+/bin/
+/dist/
+/coverage*
+*.test
+*.out
+/web/node_modules/
+/web/dist/
+/internal/server/webui/dist/*
+!/internal/server/webui/dist/.gitkeep
+/.dev/
+/testdata/fuzz-cache/
+.DS_Store
+.idea/
+.vscode/
+/.claude/

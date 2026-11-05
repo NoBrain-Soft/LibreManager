@@ -1,0 +1,7 @@
+.git
+.claude
+bin
+dist
+web/node_modules
+web/dist
+**/*.test

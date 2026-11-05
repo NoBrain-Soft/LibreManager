@@ -1,0 +1,41 @@
+# Caddy terminates TLS for the web UI / API only. The agent gateway (8443)
+# terminates its own mTLS and is published directly by its container.
+{
+	admin off
+	email {$STELLWERK_ACME_EMAIL:hostmaster@invalid}
+}
+
+{$STELLWERK_FQDN} {
+	import tls_{$STELLWERK_TLS}
+
+	encode zstd gzip
+	request_body {
+		max_size 2MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+		-Server
+	}
+	handle_path /grafana/* {
+		reverse_proxy grafana:3000
+	}
+	reverse_proxy api:8080 {
+		header_up X-Forwarded-For {remote_host}
+	}
+	log {
+		output stdout
+		format json
+	}
+}
+
+(tls_internal) {
+	tls internal
+}
+(tls_acme) {
+	# ACME (HTTP-01/TLS-ALPN-01) with the e-mail configured above.
+}
+(tls_custom) {
+	tls /certs/fullchain.pem /certs/privkey.pem
+}

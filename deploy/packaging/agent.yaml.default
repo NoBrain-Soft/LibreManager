@@ -1,0 +1,33 @@
+# Stellwerk agent local policy. Owned by root; central cannot change it.
+# Both the agent core and the root helper enforce it independently.
+central: "@CENTRAL@"
+ca_fingerprint_sha256: "@CA_FINGERPRINT@"
+ca_file: /etc/stellwerk/ca.pem
+require_time_sync: true
+
+capabilities:
+  metrics: true
+  inventory: true
+  security_checks: true
+  packages: { list: true, upgrade: true, install: false, remove: false }
+  services:
+    control: true
+    allow: ["*.service"]
+    deny: ["sshd.service", "ssh.service", "systemd-*.service", "dbus*.service"]
+  reboot: true
+  shell:
+    enabled: true
+    # Root shells are off; people use sudo so host-local sudo rules and
+    # logging apply. Accounts: "name", "%group" or "*" (any login account).
+    allow_root: false
+    allowed_users: ["%sudo", "%wheel", "%stellwerk-shell"]
+  exec_scripts: false
+  file_read:
+    allow: ["/etc/**", "/var/log/**"]
+    deny: ["/etc/shadow*", "/etc/gshadow*", "/etc/ssl/private/**", "/etc/pki/tls/private/**", "/etc/ssh/*_key", "/etc/sudoers*"]
+  self_update: false
+
+limits:
+  max_jobs_per_minute: 30
+  max_concurrent_shells: 3
+  max_shell_duration: 4h

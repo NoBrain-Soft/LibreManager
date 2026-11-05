@@ -1,6 +1,6 @@
 # Stellwerk — Central Linux Server Management Platform
 
-> **Status:** Planning / architecture baseline (v0.1, 2026-11-05)
+> **Status:** Architecture baseline v0.2 (2026-11-05) — open questions decided (§12), implementation in progress
 > **Working name:** *Stellwerk* (German for "signal box" — one central place that controls many tracks). Placeholder; rename freely (search/replace `stellwerk`).
 > **Audience:** The implementer (Claude Code + human reviewer). This document is the source of truth for architecture decisions until superseded by an ADR in `docs/adr/`.
 
@@ -369,8 +369,8 @@ Agent (core **and** helper) verify: signature against pinned key, `host_id == se
 
 ### 6.4 Authentication and authorization (web)
 
-- **OIDC** (e.g. Microsoft Entra ID, Keycloak, Authentik) as primary; group claims → role bindings. Conditional Access/MFA enforced by IdP *and* app-level `amr`/`acr` check.
-- **Local accounts** only for break-glass: Argon2id password + **mandatory WebAuthn** (TOTP as fallback, configurable off).
+- **Local accounts are primary in the first release** (owner decision, see ADR-0009): Argon2id password + MFA required by default (WebAuthn preferred, TOTP allowed, configurable off).
+- **OIDC** (e.g. Microsoft Entra ID, Keycloak, Authentik) is a later addition; group claims → role bindings. Conditional Access/MFA enforced by IdP *and* app-level `amr`/`acr` check.
 - Sessions: server-side session store (PostgreSQL), 8 h absolute / 30 min idle default; step-up valid 5 min.
 - **RBAC:** permissions × scope (global or host group subtree). Built-in roles: `viewer`, `operator` (updates/services), `shell-user`, `security-analyst`, `admin`. Custom roles possible.
 - API tokens: scoped, expiring, hashed (SHA-256 + server pepper), shown once; cannot open shells.
@@ -649,18 +649,28 @@ stellwerk/
 
 ---
 
-## 12. Open questions (decide before/during Phase 1)
+## 12. Decisions on the former open questions (2026-11-05)
 
-1. **Scale:** expected number of servers now / in 3 years? (affects whether HA is Phase 5 or 6)
-2. **Distros/versions** in the fleet (RHEL-family? SLES? Alpine?) and any air-gapped segments?
-3. **IdP:** which OIDC provider (Entra ID?) and which group claims map to roles?
-4. **Shell identity:** shared ops account vs. per-user accounts? Is root shell ever allowed?
-5. **Retention:** metrics (30 d raw?), audit log (≥ 1 y?), shell recordings (90 d?).
-6. **Notification channels:** mail, Teams, ticket system (webhook into ITSM)?
-7. **Central placement:** which network zone; can servers reach it on 8443; is 443 restricted to admin VPN?
-8. **Project license / naming** (internal only vs. open source later).
+| # | Question | Decision | Consequence in the design |
+|---|----------|----------|---------------------------|
+| 1 | Scale | **~10 servers** | Single-node central is ample; HA stays in **Phase 6**. Default sizing 2 vCPU / 4 GB. |
+| 2 | Distros / air-gap | **RHEL-family and Debian/Ubuntu**, no air-gapped segments | apt + dnf backends only (zypper/apk stay Phase 6); online install path is primary, offline bundle remains optional. |
+| 3 | IdP | **No IdP integration at first; local accounts** on the management server | ADR-0009: local accounts are primary (Argon2id + MFA required by default, WebAuthn preferred, TOTP allowed). Schema keeps `external_id`/`auth_source` for later OIDC. |
+| 4 | Shell identity / root | **All configurable** | Fleet default + per-host-group override: `shared` account, `per_user` (Stellwerk username), or `choose`. Root requires central `allow_root` (fleet *and* group) **and** the `shell.root` permission **and** `allow_root: true` in the host's local policy. Default: `choose`, shared account `ops`, root off. |
+| 5 | Retention | **Metrics 30 d, audit ≥ 1 y, recordings 90 d** | Defaults: metrics 30 d (VictoriaMetrics `-retentionPeriod`), audit 400 d (UI enforces ≥ 365), recordings 90 d, job output 90 d; hourly retention job. |
+| 6 | Notifications | **Mail and webhook, both optional** | ADR-0010: Alertmanager forwards to Stellwerk; Stellwerk delivers to SMTP and HMAC-signed HTTPS webhooks configured in the UI. |
+| 7 | Placement / ports | **No restrictions** | 443 is not restricted by default; `install-central.sh --admin-cidrs` can still add an nftables restriction. Agents need only 8443 outbound. |
+| 8 | License / naming | **Internal only, open source later** | No license file yet (packages say "Proprietary (internal)"); all dependencies are OSI-licensed (Apache-2.0/MIT/BSD; Grafana AGPL only as optional profile) so open-sourcing stays possible. Working name *Stellwerk* kept; repository is *LibreManager*. |
 
----
+### 12.1 Implementation notes (refinements, no change of intent)
+
+- **OpenAPI 3.0.3** instead of 3.1 for full generator support (oapi-codegen, openapi-typescript); semantics identical.
+- **Job actions**: besides §6.3, `PkgInstall`, `PkgRemove` and `CollectInventory` exist as separate actions. `CancelJob` is not signed: it can only stop work, never start it.
+- **Job dispatch** goes through PostgreSQL (`job_targets` + `LISTEN/NOTIFY`), which also prepares multiple gateways; the API ↔ gateway control channel (shell relay, cancel) is gRPC on a unix socket.
+- **Helper ↔ core**: length-prefixed protobuf over the unix socket with `SO_PEERCRED`; the helper re-reads the root-owned policy, `/etc/stellwerk/host-id` and pinned keys for every job and keeps its own persistent nonce cache. It checks time sync before signature verification so an unsynced clock does not consume nonces.
+- **Agent sandbox**: `ProtectHome=read-only` (instead of `yes`) so `/home` filesystem usage stays measurable; `SystemCallFilter=@system-service adjtimex` because the time-sync check needs a read-only `adjtimex`; `ProtectClock` is not set for the same reason.
+- **Package refresh**: the agent never refreshes package metadata on its own (no unsigned path); listings use the distribution's own refresh timers (`apt-daily`, `dnf-makecache`) or a signed `pkg_refresh` job.
+- **SBOM**: the agent reports a package list with PURLs (name, version, arch, source package, distro qualifier); the CycloneDX SBOM for Grype is assembled centrally from it (Phase 4).
 
 ## 13. Glossary
 

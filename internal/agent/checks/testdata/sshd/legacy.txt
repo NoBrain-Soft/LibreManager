@@ -1,0 +1,10 @@
+PermitRootLogin without-password
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+MaxAuthTries 4
+X11Forwarding no
+Ciphers aes256-ctr,aes128-ctr
+MACs hmac-sha2-256
+KexAlgorithms curve25519-sha256
+LoginGraceTime 1m
+PermitEmptyPasswords no

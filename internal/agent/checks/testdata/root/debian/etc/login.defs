@@ -1,0 +1,3 @@
+# login.defs
+UID_MIN			 1000
+UID_MAX			60000

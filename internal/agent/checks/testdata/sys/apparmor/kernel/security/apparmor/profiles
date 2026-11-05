@@ -1,0 +1,3 @@
+/usr/sbin/cupsd (enforce)
+/usr/bin/man (enforce)
+nvidia_modprobe (complain)

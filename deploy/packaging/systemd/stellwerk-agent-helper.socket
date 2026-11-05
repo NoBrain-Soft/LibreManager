@@ -1,0 +1,14 @@
+[Unit]
+Description=Stellwerk agent helper socket
+
+[Socket]
+ListenStream=/run/stellwerk/helper.sock
+SocketUser=root
+SocketGroup=stellwerk-agent
+SocketMode=0660
+DirectoryMode=0755
+Accept=no
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

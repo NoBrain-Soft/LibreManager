@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package stellwerk.helper.v1;
+
+import "stellwerk/agent/v1/inventory.proto";
+import "stellwerk/agent/v1/job.proto";
+
+option go_package = "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/helper/v1;helperv1";
+
+// Wire protocol between stellwerk-agent (core, unprivileged) and
+// stellwerk-agent-helper (root) over /run/stellwerk/helper.sock.
+//
+// Framing: each message is a 4-byte big-endian length followed by the
+// protobuf encoding (max 1 MiB). A connection carries exactly one request
+// and its responses; the helper closes the connection after the final
+// response. When a response carries a file descriptor (ShellStarted), it is
+// attached to that frame with SCM_RIGHTS.
+//
+// The RPC set is fixed and typed (CLAUDE.md rule 5). Every state-changing
+// call is an ExecuteJob carrying the original SignedJob, which the helper
+// verifies again on its own (signature, host_id, time window, nonce, local
+// policy). There is no generic command execution.
+message HelperRequest {
+  oneof call {
+    ExecuteJobRequest execute_job = 10;
+    ListUpgradesRequest list_upgrades = 11;
+    ReadPrivilegedRequest read_privileged = 12;
+    PingRequest ping = 13;
+  }
+}
+
+message ExecuteJobRequest {
+  stellwerk.agent.v1.SignedJob job = 1;
+}
+
+message ListUpgradesRequest {}
+
+enum PrivilegedKind {
+  PRIVILEGED_KIND_UNSPECIFIED = 0;
+  // Account password flags derived from /etc/shadow (never hashes).
+  PRIVILEGED_KIND_SHADOW_FLAGS = 1;
+  // Allow-listed keys from `sshd -T`.
+  PRIVILEGED_KIND_SSHD_EFFECTIVE_CONFIG = 2;
+  // Summarized sudoers rules.
+  PRIVILEGED_KIND_SUDOERS = 3;
+  // Owning process of listening sockets.
+  PRIVILEGED_KIND_SOCKET_OWNERS = 4;
+}
+
+message ReadPrivilegedRequest {
+  PrivilegedKind kind = 1;
+}
+
+message PingRequest {}
+
+message HelperResponse {
+  oneof result {
+    stellwerk.agent.v1.JobOutput output = 10;
+    stellwerk.agent.v1.JobFinished finished = 11;
+    stellwerk.agent.v1.UpdatesReport upgrades = 12;
+    PrivilegedData privileged = 13;
+    ShellStarted shell_started = 14;
+    HelperError error = 15;
+    PingResponse pong = 16;
+  }
+}
+
+message PrivilegedData {
+  PrivilegedKind kind = 1;
+  // Key -> value entries (sshd config; socket owners: inode -> "PID/name").
+  map<string, string> values = 2;
+  // Usernames with an empty password hash.
+  repeated string empty_password_users = 3;
+  // Usernames whose password is locked (! or *).
+  repeated string locked_users = 4;
+  // Sudo rule summaries ("%group ALL=(ALL) NOPASSWD: ALL").
+  repeated string sudo_rules = 5;
+}
+
+// Sent when a PTY shell has been spawned. The PTY master fd is attached
+// via SCM_RIGHTS. A JobFinished follows when the shell exits.
+message ShellStarted {
+  int32 pid = 1;
+}
+
+message HelperError {
+  string message = 1;
+}
+
+message PingResponse {
+  string version = 1;
+  string host_id = 2;
+}

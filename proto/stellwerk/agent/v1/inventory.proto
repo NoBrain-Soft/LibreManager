@@ -1,0 +1,302 @@
+syntax = "proto3";
+
+package stellwerk.agent.v1;
+
+option go_package = "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/agent/v1;agentv1";
+
+// InventoryReport carries one or more inventory sections. The agent sends
+// all sections on start and every 6 h; individual sections (e.g. packages)
+// are re-sent when they change. The section hash lets central skip writes
+// for unchanged data.
+message InventoryReport {
+  int64 collected_at_ms = 1;
+  repeated InventorySection sections = 2;
+}
+
+message InventorySection {
+  // SHA-256 over the deterministic encoding of the data field.
+  bytes hash = 1;
+  oneof data {
+    OsInfo os = 10;
+    Hardware hardware = 11;
+    NetworkInfo network = 12;
+    PackageList packages = 13;
+    ServiceList services = 14;
+    ListeningPorts ports = 15;
+    UserAccounts users = 16;
+    ScheduledTasks scheduled = 17;
+    Containers containers = 18;
+    SshHostKeys ssh_host_keys = 19;
+    Certificates certificates = 20;
+    AgentInfo agent = 21;
+  }
+}
+
+message OsInfo {
+  // os-release ID, e.g. "debian", "ubuntu", "rhel", "rocky", "almalinux".
+  string id = 1;
+  // os-release ID_LIKE.
+  repeated string id_like = 2;
+  // "debian" or "rhel" (package family).
+  string family = 3;
+  string version_id = 4;
+  string pretty_name = 5;
+  string kernel = 6;
+  string arch = 7;
+  string hostname = 8;
+  string fqdn = 9;
+  string virtualization = 10;
+  int64 boot_time_unix = 11;
+  string machine_id = 12;
+  string timezone = 13;
+}
+
+message Hardware {
+  string cpu_model = 1;
+  uint32 cpu_cores = 2;
+  uint32 cpu_threads = 3;
+  uint64 memory_bytes = 4;
+  uint64 swap_bytes = 5;
+  repeated BlockDevice block_devices = 6;
+  repeated Filesystem filesystems = 7;
+  string vendor = 8;
+  string product = 9;
+}
+
+message BlockDevice {
+  string name = 1;
+  uint64 size_bytes = 2;
+  string model = 3;
+  bool rotational = 4;
+  // "disk", "part", "lvm", "md", ...
+  string type = 5;
+}
+
+message Filesystem {
+  string device = 1;
+  string mountpoint = 2;
+  string fstype = 3;
+  uint64 size_bytes = 4;
+  repeated string options = 5;
+}
+
+message NetworkInfo {
+  repeated NetInterface interfaces = 1;
+  repeated Route routes = 2;
+  repeated string dns_servers = 3;
+  repeated string dns_search = 4;
+}
+
+message NetInterface {
+  string name = 1;
+  string mac = 2;
+  uint32 mtu = 3;
+  repeated string addresses = 4;
+  bool up = 5;
+}
+
+message Route {
+  string destination = 1;
+  string gateway = 2;
+  string interface = 3;
+  uint32 metric = 4;
+}
+
+message PackageList {
+  // "dpkg" or "rpm".
+  string manager = 1;
+  repeated Package packages = 2;
+}
+
+message Package {
+  string name = 1;
+  string version = 2;
+  string arch = 3;
+  // Repository/origin if known.
+  string source = 4;
+  // Package URL, e.g. pkg:deb/debian/openssl@3.0.11-1?arch=amd64&distro=debian-12
+  string purl = 5;
+  // Source package name if different (used for CVE matching).
+  string source_name = 6;
+}
+
+message ServiceList {
+  repeated Unit units = 1;
+}
+
+message Unit {
+  string name = 1;
+  string load_state = 2;
+  string active_state = 3;
+  string sub_state = 4;
+  // enabled, disabled, static, masked, ...
+  string unit_file_state = 5;
+  string description = 6;
+}
+
+message ListeningPorts {
+  repeated ListeningPort ports = 1;
+}
+
+message ListeningPort {
+  // "tcp", "tcp6", "udp", "udp6".
+  string protocol = 1;
+  string address = 2;
+  uint32 port = 3;
+  // Owning process if visible to the agent user (may be empty).
+  string process = 4;
+  int32 pid = 5;
+}
+
+message UserAccounts {
+  repeated UserAccount users = 1;
+  repeated UserGroup groups = 2;
+  // Summary of sudo rules (from helper; may be empty without privileges).
+  repeated string sudo_rules = 3;
+}
+
+message UserAccount {
+  string name = 1;
+  uint32 uid = 2;
+  uint32 gid = 3;
+  string home = 4;
+  string shell = 5;
+  bool interactive = 6;
+  int64 last_login_unix = 7;
+}
+
+message UserGroup {
+  string name = 1;
+  uint32 gid = 2;
+  repeated string members = 3;
+}
+
+message ScheduledTasks {
+  repeated ScheduledTask tasks = 1;
+}
+
+message ScheduledTask {
+  // "cron" or "systemd-timer".
+  string kind = 1;
+  string name = 2;
+  string schedule = 3;
+  string command = 4;
+  string user = 5;
+}
+
+message Containers {
+  repeated Container containers = 1;
+}
+
+message Container {
+  // "docker" or "podman".
+  string runtime = 1;
+  string id = 2;
+  string name = 3;
+  string image = 4;
+  string state = 5;
+}
+
+message SshHostKeys {
+  repeated SshHostKey keys = 1;
+}
+
+message SshHostKey {
+  string type = 1;
+  // SHA256:... fingerprint as printed by ssh-keygen -lf.
+  string fingerprint_sha256 = 2;
+}
+
+message Certificates {
+  repeated Certificate certificates = 1;
+}
+
+message Certificate {
+  string path = 1;
+  string subject = 2;
+  string issuer = 3;
+  repeated string dns_names = 4;
+  int64 not_before_unix = 5;
+  int64 not_after_unix = 6;
+  string sha256_fingerprint = 7;
+}
+
+message AgentInfo {
+  string version = 1;
+  string commit = 2;
+  // Local policy summary (informational only; central must not rely on it).
+  PolicySummary policy = 3;
+  bool helper_available = 4;
+}
+
+message PolicySummary {
+  bool metrics = 1;
+  bool inventory = 2;
+  bool security_checks = 3;
+  bool pkg_upgrade = 4;
+  bool pkg_install = 5;
+  bool pkg_remove = 6;
+  bool service_control = 7;
+  bool reboot = 8;
+  bool shell = 9;
+  bool shell_allow_root = 10;
+  repeated string shell_allowed_users = 11;
+  bool exec_scripts = 12;
+  bool self_update = 13;
+}
+
+// Pending updates as reported by the package manager (via helper).
+message UpdatesReport {
+  int64 checked_at_ms = 1;
+  // "apt" or "dnf".
+  string manager = 2;
+  repeated PendingUpdate updates = 3;
+  bool reboot_required = 4;
+  repeated string reboot_reasons = 5;
+  string error = 6;
+}
+
+message PendingUpdate {
+  string name = 1;
+  string current_version = 2;
+  string candidate_version = 3;
+  string arch = 4;
+  string source = 5;
+  bool is_security = 6;
+  // Advisory ids (RHSA-..., USN-...), if known.
+  repeated string advisories = 7;
+}
+
+enum CheckStatus {
+  CHECK_STATUS_UNSPECIFIED = 0;
+  CHECK_STATUS_PASS = 1;
+  CHECK_STATUS_FAIL = 2;
+  CHECK_STATUS_WARN = 3;
+  CHECK_STATUS_NA = 4;
+  CHECK_STATUS_ERROR = 5;
+}
+
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_INFO = 1;
+  SEVERITY_LOW = 2;
+  SEVERITY_MEDIUM = 3;
+  SEVERITY_HIGH = 4;
+  SEVERITY_CRITICAL = 5;
+}
+
+// Results of built-in security checks (ARCHITECTURE.md §7.1).
+message CheckReport {
+  int64 collected_at_ms = 1;
+  repeated CheckResult results = 2;
+}
+
+message CheckResult {
+  string check_id = 1;
+  CheckStatus status = 2;
+  Severity severity = 3;
+  string title = 4;
+  string summary = 5;
+  // Short evidence strings (key -> value), size-limited by the gateway.
+  map<string, string> evidence = 6;
+}
