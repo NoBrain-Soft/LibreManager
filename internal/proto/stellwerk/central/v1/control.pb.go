@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.12
 // 	protoc        (unknown)
-// source: stellwerk/internal/v1/control.proto
+// source: stellwerk/central/v1/control.proto
 
-package internalv1
+package centralv1
 
 import (
 	v1 "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/agent/v1"
@@ -38,7 +38,7 @@ type SignJobsRequest struct {
 
 func (x *SignJobsRequest) Reset() {
 	*x = SignJobsRequest{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[0]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -50,7 +50,7 @@ func (x *SignJobsRequest) String() string {
 func (*SignJobsRequest) ProtoMessage() {}
 
 func (x *SignJobsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[0]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -63,7 +63,7 @@ func (x *SignJobsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignJobsRequest.ProtoReflect.Descriptor instead.
 func (*SignJobsRequest) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{0}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *SignJobsRequest) GetTemplate() *v1.Job {
@@ -103,7 +103,7 @@ type SignJobsResponse struct {
 
 func (x *SignJobsResponse) Reset() {
 	*x = SignJobsResponse{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[1]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -115,7 +115,7 @@ func (x *SignJobsResponse) String() string {
 func (*SignJobsResponse) ProtoMessage() {}
 
 func (x *SignJobsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[1]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -128,7 +128,7 @@ func (x *SignJobsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignJobsResponse.ProtoReflect.Descriptor instead.
 func (*SignJobsResponse) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{1}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SignJobsResponse) GetEnvelopes() []*SignedEnvelope {
@@ -148,7 +148,7 @@ type SignedEnvelope struct {
 
 func (x *SignedEnvelope) Reset() {
 	*x = SignedEnvelope{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[2]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -160,7 +160,7 @@ func (x *SignedEnvelope) String() string {
 func (*SignedEnvelope) ProtoMessage() {}
 
 func (x *SignedEnvelope) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[2]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -173,7 +173,7 @@ func (x *SignedEnvelope) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignedEnvelope.ProtoReflect.Descriptor instead.
 func (*SignedEnvelope) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{2}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SignedEnvelope) GetHostId() string {
@@ -198,7 +198,7 @@ type ListKeysRequest struct {
 
 func (x *ListKeysRequest) Reset() {
 	*x = ListKeysRequest{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[3]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -210,7 +210,7 @@ func (x *ListKeysRequest) String() string {
 func (*ListKeysRequest) ProtoMessage() {}
 
 func (x *ListKeysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[3]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -223,7 +223,7 @@ func (x *ListKeysRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListKeysRequest.ProtoReflect.Descriptor instead.
 func (*ListKeysRequest) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{3}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{3}
 }
 
 type ListKeysResponse struct {
@@ -235,7 +235,7 @@ type ListKeysResponse struct {
 
 func (x *ListKeysResponse) Reset() {
 	*x = ListKeysResponse{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[4]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -247,7 +247,7 @@ func (x *ListKeysResponse) String() string {
 func (*ListKeysResponse) ProtoMessage() {}
 
 func (x *ListKeysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[4]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -260,7 +260,7 @@ func (x *ListKeysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListKeysResponse.ProtoReflect.Descriptor instead.
 func (*ListKeysResponse) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{4}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListKeysResponse) GetKeys() []*v1.JobKey {
@@ -285,7 +285,7 @@ type ShellRelayRequest struct {
 
 func (x *ShellRelayRequest) Reset() {
 	*x = ShellRelayRequest{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[5]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -297,7 +297,7 @@ func (x *ShellRelayRequest) String() string {
 func (*ShellRelayRequest) ProtoMessage() {}
 
 func (x *ShellRelayRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[5]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -310,7 +310,7 @@ func (x *ShellRelayRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShellRelayRequest.ProtoReflect.Descriptor instead.
 func (*ShellRelayRequest) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{5}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ShellRelayRequest) GetPayload() isShellRelayRequest_Payload {
@@ -396,7 +396,7 @@ type ShellRelayAttach struct {
 
 func (x *ShellRelayAttach) Reset() {
 	*x = ShellRelayAttach{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[6]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -408,7 +408,7 @@ func (x *ShellRelayAttach) String() string {
 func (*ShellRelayAttach) ProtoMessage() {}
 
 func (x *ShellRelayAttach) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[6]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -421,7 +421,7 @@ func (x *ShellRelayAttach) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShellRelayAttach.ProtoReflect.Descriptor instead.
 func (*ShellRelayAttach) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{6}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ShellRelayAttach) GetSessionId() string {
@@ -459,7 +459,7 @@ type ShellRelayResponse struct {
 
 func (x *ShellRelayResponse) Reset() {
 	*x = ShellRelayResponse{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[7]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -471,7 +471,7 @@ func (x *ShellRelayResponse) String() string {
 func (*ShellRelayResponse) ProtoMessage() {}
 
 func (x *ShellRelayResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[7]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -484,7 +484,7 @@ func (x *ShellRelayResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShellRelayResponse.ProtoReflect.Descriptor instead.
 func (*ShellRelayResponse) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{7}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ShellRelayResponse) GetPayload() isShellRelayResponse_Payload {
@@ -552,7 +552,7 @@ type ShellRelayReady struct {
 
 func (x *ShellRelayReady) Reset() {
 	*x = ShellRelayReady{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[8]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -564,7 +564,7 @@ func (x *ShellRelayReady) String() string {
 func (*ShellRelayReady) ProtoMessage() {}
 
 func (x *ShellRelayReady) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[8]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -577,7 +577,7 @@ func (x *ShellRelayReady) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShellRelayReady.ProtoReflect.Descriptor instead.
 func (*ShellRelayReady) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{8}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{8}
 }
 
 type CancelJobRequest struct {
@@ -590,7 +590,7 @@ type CancelJobRequest struct {
 
 func (x *CancelJobRequest) Reset() {
 	*x = CancelJobRequest{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[9]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -602,7 +602,7 @@ func (x *CancelJobRequest) String() string {
 func (*CancelJobRequest) ProtoMessage() {}
 
 func (x *CancelJobRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[9]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -615,7 +615,7 @@ func (x *CancelJobRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelJobRequest.ProtoReflect.Descriptor instead.
 func (*CancelJobRequest) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{9}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *CancelJobRequest) GetHostId() string {
@@ -641,7 +641,7 @@ type CancelJobResponse struct {
 
 func (x *CancelJobResponse) Reset() {
 	*x = CancelJobResponse{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[10]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -653,7 +653,7 @@ func (x *CancelJobResponse) String() string {
 func (*CancelJobResponse) ProtoMessage() {}
 
 func (x *CancelJobResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[10]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -666,7 +666,7 @@ func (x *CancelJobResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelJobResponse.ProtoReflect.Descriptor instead.
 func (*CancelJobResponse) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{10}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CancelJobResponse) GetDelivered() bool {
@@ -684,7 +684,7 @@ type ListConnectedRequest struct {
 
 func (x *ListConnectedRequest) Reset() {
 	*x = ListConnectedRequest{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[11]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -696,7 +696,7 @@ func (x *ListConnectedRequest) String() string {
 func (*ListConnectedRequest) ProtoMessage() {}
 
 func (x *ListConnectedRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[11]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -709,7 +709,7 @@ func (x *ListConnectedRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConnectedRequest.ProtoReflect.Descriptor instead.
 func (*ListConnectedRequest) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{11}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{11}
 }
 
 type ListConnectedResponse struct {
@@ -721,7 +721,7 @@ type ListConnectedResponse struct {
 
 func (x *ListConnectedResponse) Reset() {
 	*x = ListConnectedResponse{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[12]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -733,7 +733,7 @@ func (x *ListConnectedResponse) String() string {
 func (*ListConnectedResponse) ProtoMessage() {}
 
 func (x *ListConnectedResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[12]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -746,7 +746,7 @@ func (x *ListConnectedResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListConnectedResponse.ProtoReflect.Descriptor instead.
 func (*ListConnectedResponse) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{12}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListConnectedResponse) GetAgents() []*ConnectedAgent {
@@ -768,7 +768,7 @@ type ConnectedAgent struct {
 
 func (x *ConnectedAgent) Reset() {
 	*x = ConnectedAgent{}
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[13]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -780,7 +780,7 @@ func (x *ConnectedAgent) String() string {
 func (*ConnectedAgent) ProtoMessage() {}
 
 func (x *ConnectedAgent) ProtoReflect() protoreflect.Message {
-	mi := &file_stellwerk_internal_v1_control_proto_msgTypes[13]
+	mi := &file_stellwerk_central_v1_control_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -793,7 +793,7 @@ func (x *ConnectedAgent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnectedAgent.ProtoReflect.Descriptor instead.
 func (*ConnectedAgent) Descriptor() ([]byte, []int) {
-	return file_stellwerk_internal_v1_control_proto_rawDescGZIP(), []int{13}
+	return file_stellwerk_central_v1_control_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ConnectedAgent) GetHostId() string {
@@ -824,27 +824,27 @@ func (x *ConnectedAgent) GetAgentVersion() string {
 	return ""
 }
 
-var File_stellwerk_internal_v1_control_proto protoreflect.FileDescriptor
+var File_stellwerk_central_v1_control_proto protoreflect.FileDescriptor
 
-const file_stellwerk_internal_v1_control_proto_rawDesc = "" +
+const file_stellwerk_central_v1_control_proto_rawDesc = "" +
 	"\n" +
-	"#stellwerk/internal/v1/control.proto\x12\x15stellwerk.internal.v1\x1a stellwerk/agent/v1/gateway.proto\x1a\x1cstellwerk/agent/v1/job.proto\"\x95\x01\n" +
+	"\"stellwerk/central/v1/control.proto\x12\x14stellwerk.central.v1\x1a stellwerk/agent/v1/gateway.proto\x1a\x1cstellwerk/agent/v1/job.proto\"\x95\x01\n" +
 	"\x0fSignJobsRequest\x123\n" +
 	"\btemplate\x18\x01 \x01(\v2\x17.stellwerk.agent.v1.JobR\btemplate\x12\x19\n" +
 	"\bhost_ids\x18\x02 \x03(\tR\ahostIds\x12\x13\n" +
 	"\x05ttl_s\x18\x03 \x01(\rR\x04ttlS\x12\x1d\n" +
 	"\n" +
-	"not_before\x18\x04 \x01(\x03R\tnotBefore\"W\n" +
-	"\x10SignJobsResponse\x12C\n" +
-	"\tenvelopes\x18\x01 \x03(\v2%.stellwerk.internal.v1.SignedEnvelopeR\tenvelopes\"`\n" +
+	"not_before\x18\x04 \x01(\x03R\tnotBefore\"V\n" +
+	"\x10SignJobsResponse\x12B\n" +
+	"\tenvelopes\x18\x01 \x03(\v2$.stellwerk.central.v1.SignedEnvelopeR\tenvelopes\"`\n" +
 	"\x0eSignedEnvelope\x12\x17\n" +
 	"\ahost_id\x18\x01 \x01(\tR\x06hostId\x125\n" +
 	"\x06signed\x18\x02 \x01(\v2\x1d.stellwerk.agent.v1.SignedJobR\x06signed\"\x11\n" +
 	"\x0fListKeysRequest\"B\n" +
 	"\x10ListKeysResponse\x12.\n" +
-	"\x04keys\x18\x01 \x03(\v2\x1a.stellwerk.agent.v1.JobKeyR\x04keys\"\xec\x01\n" +
-	"\x11ShellRelayRequest\x12A\n" +
-	"\x06attach\x18\x01 \x01(\v2'.stellwerk.internal.v1.ShellRelayAttachH\x00R\x06attach\x12\x16\n" +
+	"\x04keys\x18\x01 \x03(\v2\x1a.stellwerk.agent.v1.JobKeyR\x04keys\"\xeb\x01\n" +
+	"\x11ShellRelayRequest\x12@\n" +
+	"\x06attach\x18\x01 \x01(\v2&.stellwerk.central.v1.ShellRelayAttachH\x00R\x06attach\x12\x16\n" +
 	"\x05input\x18\x02 \x01(\fH\x00R\x05input\x129\n" +
 	"\x06resize\x18\x03 \x01(\v2\x1f.stellwerk.agent.v1.ShellResizeH\x00R\x06resize\x126\n" +
 	"\x05close\x18\x04 \x01(\v2\x1e.stellwerk.agent.v1.ShellCloseH\x00R\x05closeB\t\n" +
@@ -853,9 +853,9 @@ const file_stellwerk_internal_v1_control_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x17\n" +
 	"\ahost_id\x18\x02 \x01(\tR\x06hostId\x123\n" +
-	"\x05grant\x18\x03 \x01(\v2\x1d.stellwerk.agent.v1.SignedJobR\x05grant\"\xae\x01\n" +
-	"\x12ShellRelayResponse\x12>\n" +
-	"\x05ready\x18\x01 \x01(\v2&.stellwerk.internal.v1.ShellRelayReadyH\x00R\x05ready\x12\x18\n" +
+	"\x05grant\x18\x03 \x01(\v2\x1d.stellwerk.agent.v1.SignedJobR\x05grant\"\xad\x01\n" +
+	"\x12ShellRelayResponse\x12=\n" +
+	"\x05ready\x18\x01 \x01(\v2%.stellwerk.central.v1.ShellRelayReadyH\x00R\x05ready\x12\x18\n" +
 	"\x06output\x18\x02 \x01(\fH\x00R\x06output\x123\n" +
 	"\x04exit\x18\x03 \x01(\v2\x1d.stellwerk.agent.v1.ShellExitH\x00R\x04exitB\t\n" +
 	"\apayload\"\x11\n" +
@@ -865,52 +865,52 @@ const file_stellwerk_internal_v1_control_proto_rawDesc = "" +
 	"\x06job_id\x18\x02 \x01(\tR\x05jobId\"1\n" +
 	"\x11CancelJobResponse\x12\x1c\n" +
 	"\tdelivered\x18\x01 \x01(\bR\tdelivered\"\x16\n" +
-	"\x14ListConnectedRequest\"V\n" +
-	"\x15ListConnectedResponse\x12=\n" +
-	"\x06agents\x18\x01 \x03(\v2%.stellwerk.internal.v1.ConnectedAgentR\x06agents\"\x97\x01\n" +
+	"\x14ListConnectedRequest\"U\n" +
+	"\x15ListConnectedResponse\x12<\n" +
+	"\x06agents\x18\x01 \x03(\v2$.stellwerk.central.v1.ConnectedAgentR\x06agents\"\x97\x01\n" +
 	"\x0eConnectedAgent\x12\x17\n" +
 	"\ahost_id\x18\x01 \x01(\tR\x06hostId\x12&\n" +
 	"\x0fconnected_at_ms\x18\x02 \x01(\x03R\rconnectedAtMs\x12\x1f\n" +
 	"\vremote_addr\x18\x03 \x01(\tR\n" +
 	"remoteAddr\x12#\n" +
-	"\ragent_version\x18\x04 \x01(\tR\fagentVersion2\xc9\x01\n" +
-	"\rSignerService\x12[\n" +
-	"\bSignJobs\x12&.stellwerk.internal.v1.SignJobsRequest\x1a'.stellwerk.internal.v1.SignJobsResponse\x12[\n" +
-	"\bListKeys\x12&.stellwerk.internal.v1.ListKeysRequest\x1a'.stellwerk.internal.v1.ListKeysResponse2\xca\x02\n" +
-	"\x15GatewayControlService\x12e\n" +
+	"\ragent_version\x18\x04 \x01(\tR\fagentVersion2\xc5\x01\n" +
+	"\rSignerService\x12Y\n" +
+	"\bSignJobs\x12%.stellwerk.central.v1.SignJobsRequest\x1a&.stellwerk.central.v1.SignJobsResponse\x12Y\n" +
+	"\bListKeys\x12%.stellwerk.central.v1.ListKeysRequest\x1a&.stellwerk.central.v1.ListKeysResponse2\xc4\x02\n" +
+	"\x15GatewayControlService\x12c\n" +
 	"\n" +
-	"ShellRelay\x12(.stellwerk.internal.v1.ShellRelayRequest\x1a).stellwerk.internal.v1.ShellRelayResponse(\x010\x01\x12^\n" +
-	"\tCancelJob\x12'.stellwerk.internal.v1.CancelJobRequest\x1a(.stellwerk.internal.v1.CancelJobResponse\x12j\n" +
-	"\rListConnected\x12+.stellwerk.internal.v1.ListConnectedRequest\x1a,.stellwerk.internal.v1.ListConnectedResponseBVZTgithub.com/nobrain-soft/libremanager/internal/proto/stellwerk/internal/v1;internalv1b\x06proto3"
+	"ShellRelay\x12'.stellwerk.central.v1.ShellRelayRequest\x1a(.stellwerk.central.v1.ShellRelayResponse(\x010\x01\x12\\\n" +
+	"\tCancelJob\x12&.stellwerk.central.v1.CancelJobRequest\x1a'.stellwerk.central.v1.CancelJobResponse\x12h\n" +
+	"\rListConnected\x12*.stellwerk.central.v1.ListConnectedRequest\x1a+.stellwerk.central.v1.ListConnectedResponseBTZRgithub.com/nobrain-soft/libremanager/internal/proto/stellwerk/central/v1;centralv1b\x06proto3"
 
 var (
-	file_stellwerk_internal_v1_control_proto_rawDescOnce sync.Once
-	file_stellwerk_internal_v1_control_proto_rawDescData []byte
+	file_stellwerk_central_v1_control_proto_rawDescOnce sync.Once
+	file_stellwerk_central_v1_control_proto_rawDescData []byte
 )
 
-func file_stellwerk_internal_v1_control_proto_rawDescGZIP() []byte {
-	file_stellwerk_internal_v1_control_proto_rawDescOnce.Do(func() {
-		file_stellwerk_internal_v1_control_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_stellwerk_internal_v1_control_proto_rawDesc), len(file_stellwerk_internal_v1_control_proto_rawDesc)))
+func file_stellwerk_central_v1_control_proto_rawDescGZIP() []byte {
+	file_stellwerk_central_v1_control_proto_rawDescOnce.Do(func() {
+		file_stellwerk_central_v1_control_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_stellwerk_central_v1_control_proto_rawDesc), len(file_stellwerk_central_v1_control_proto_rawDesc)))
 	})
-	return file_stellwerk_internal_v1_control_proto_rawDescData
+	return file_stellwerk_central_v1_control_proto_rawDescData
 }
 
-var file_stellwerk_internal_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
-var file_stellwerk_internal_v1_control_proto_goTypes = []any{
-	(*SignJobsRequest)(nil),       // 0: stellwerk.internal.v1.SignJobsRequest
-	(*SignJobsResponse)(nil),      // 1: stellwerk.internal.v1.SignJobsResponse
-	(*SignedEnvelope)(nil),        // 2: stellwerk.internal.v1.SignedEnvelope
-	(*ListKeysRequest)(nil),       // 3: stellwerk.internal.v1.ListKeysRequest
-	(*ListKeysResponse)(nil),      // 4: stellwerk.internal.v1.ListKeysResponse
-	(*ShellRelayRequest)(nil),     // 5: stellwerk.internal.v1.ShellRelayRequest
-	(*ShellRelayAttach)(nil),      // 6: stellwerk.internal.v1.ShellRelayAttach
-	(*ShellRelayResponse)(nil),    // 7: stellwerk.internal.v1.ShellRelayResponse
-	(*ShellRelayReady)(nil),       // 8: stellwerk.internal.v1.ShellRelayReady
-	(*CancelJobRequest)(nil),      // 9: stellwerk.internal.v1.CancelJobRequest
-	(*CancelJobResponse)(nil),     // 10: stellwerk.internal.v1.CancelJobResponse
-	(*ListConnectedRequest)(nil),  // 11: stellwerk.internal.v1.ListConnectedRequest
-	(*ListConnectedResponse)(nil), // 12: stellwerk.internal.v1.ListConnectedResponse
-	(*ConnectedAgent)(nil),        // 13: stellwerk.internal.v1.ConnectedAgent
+var file_stellwerk_central_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_stellwerk_central_v1_control_proto_goTypes = []any{
+	(*SignJobsRequest)(nil),       // 0: stellwerk.central.v1.SignJobsRequest
+	(*SignJobsResponse)(nil),      // 1: stellwerk.central.v1.SignJobsResponse
+	(*SignedEnvelope)(nil),        // 2: stellwerk.central.v1.SignedEnvelope
+	(*ListKeysRequest)(nil),       // 3: stellwerk.central.v1.ListKeysRequest
+	(*ListKeysResponse)(nil),      // 4: stellwerk.central.v1.ListKeysResponse
+	(*ShellRelayRequest)(nil),     // 5: stellwerk.central.v1.ShellRelayRequest
+	(*ShellRelayAttach)(nil),      // 6: stellwerk.central.v1.ShellRelayAttach
+	(*ShellRelayResponse)(nil),    // 7: stellwerk.central.v1.ShellRelayResponse
+	(*ShellRelayReady)(nil),       // 8: stellwerk.central.v1.ShellRelayReady
+	(*CancelJobRequest)(nil),      // 9: stellwerk.central.v1.CancelJobRequest
+	(*CancelJobResponse)(nil),     // 10: stellwerk.central.v1.CancelJobResponse
+	(*ListConnectedRequest)(nil),  // 11: stellwerk.central.v1.ListConnectedRequest
+	(*ListConnectedResponse)(nil), // 12: stellwerk.central.v1.ListConnectedResponse
+	(*ConnectedAgent)(nil),        // 13: stellwerk.central.v1.ConnectedAgent
 	(*v1.Job)(nil),                // 14: stellwerk.agent.v1.Job
 	(*v1.SignedJob)(nil),          // 15: stellwerk.agent.v1.SignedJob
 	(*v1.JobKey)(nil),             // 16: stellwerk.agent.v1.JobKey
@@ -918,28 +918,28 @@ var file_stellwerk_internal_v1_control_proto_goTypes = []any{
 	(*v1.ShellClose)(nil),         // 18: stellwerk.agent.v1.ShellClose
 	(*v1.ShellExit)(nil),          // 19: stellwerk.agent.v1.ShellExit
 }
-var file_stellwerk_internal_v1_control_proto_depIdxs = []int32{
-	14, // 0: stellwerk.internal.v1.SignJobsRequest.template:type_name -> stellwerk.agent.v1.Job
-	2,  // 1: stellwerk.internal.v1.SignJobsResponse.envelopes:type_name -> stellwerk.internal.v1.SignedEnvelope
-	15, // 2: stellwerk.internal.v1.SignedEnvelope.signed:type_name -> stellwerk.agent.v1.SignedJob
-	16, // 3: stellwerk.internal.v1.ListKeysResponse.keys:type_name -> stellwerk.agent.v1.JobKey
-	6,  // 4: stellwerk.internal.v1.ShellRelayRequest.attach:type_name -> stellwerk.internal.v1.ShellRelayAttach
-	17, // 5: stellwerk.internal.v1.ShellRelayRequest.resize:type_name -> stellwerk.agent.v1.ShellResize
-	18, // 6: stellwerk.internal.v1.ShellRelayRequest.close:type_name -> stellwerk.agent.v1.ShellClose
-	15, // 7: stellwerk.internal.v1.ShellRelayAttach.grant:type_name -> stellwerk.agent.v1.SignedJob
-	8,  // 8: stellwerk.internal.v1.ShellRelayResponse.ready:type_name -> stellwerk.internal.v1.ShellRelayReady
-	19, // 9: stellwerk.internal.v1.ShellRelayResponse.exit:type_name -> stellwerk.agent.v1.ShellExit
-	13, // 10: stellwerk.internal.v1.ListConnectedResponse.agents:type_name -> stellwerk.internal.v1.ConnectedAgent
-	0,  // 11: stellwerk.internal.v1.SignerService.SignJobs:input_type -> stellwerk.internal.v1.SignJobsRequest
-	3,  // 12: stellwerk.internal.v1.SignerService.ListKeys:input_type -> stellwerk.internal.v1.ListKeysRequest
-	5,  // 13: stellwerk.internal.v1.GatewayControlService.ShellRelay:input_type -> stellwerk.internal.v1.ShellRelayRequest
-	9,  // 14: stellwerk.internal.v1.GatewayControlService.CancelJob:input_type -> stellwerk.internal.v1.CancelJobRequest
-	11, // 15: stellwerk.internal.v1.GatewayControlService.ListConnected:input_type -> stellwerk.internal.v1.ListConnectedRequest
-	1,  // 16: stellwerk.internal.v1.SignerService.SignJobs:output_type -> stellwerk.internal.v1.SignJobsResponse
-	4,  // 17: stellwerk.internal.v1.SignerService.ListKeys:output_type -> stellwerk.internal.v1.ListKeysResponse
-	7,  // 18: stellwerk.internal.v1.GatewayControlService.ShellRelay:output_type -> stellwerk.internal.v1.ShellRelayResponse
-	10, // 19: stellwerk.internal.v1.GatewayControlService.CancelJob:output_type -> stellwerk.internal.v1.CancelJobResponse
-	12, // 20: stellwerk.internal.v1.GatewayControlService.ListConnected:output_type -> stellwerk.internal.v1.ListConnectedResponse
+var file_stellwerk_central_v1_control_proto_depIdxs = []int32{
+	14, // 0: stellwerk.central.v1.SignJobsRequest.template:type_name -> stellwerk.agent.v1.Job
+	2,  // 1: stellwerk.central.v1.SignJobsResponse.envelopes:type_name -> stellwerk.central.v1.SignedEnvelope
+	15, // 2: stellwerk.central.v1.SignedEnvelope.signed:type_name -> stellwerk.agent.v1.SignedJob
+	16, // 3: stellwerk.central.v1.ListKeysResponse.keys:type_name -> stellwerk.agent.v1.JobKey
+	6,  // 4: stellwerk.central.v1.ShellRelayRequest.attach:type_name -> stellwerk.central.v1.ShellRelayAttach
+	17, // 5: stellwerk.central.v1.ShellRelayRequest.resize:type_name -> stellwerk.agent.v1.ShellResize
+	18, // 6: stellwerk.central.v1.ShellRelayRequest.close:type_name -> stellwerk.agent.v1.ShellClose
+	15, // 7: stellwerk.central.v1.ShellRelayAttach.grant:type_name -> stellwerk.agent.v1.SignedJob
+	8,  // 8: stellwerk.central.v1.ShellRelayResponse.ready:type_name -> stellwerk.central.v1.ShellRelayReady
+	19, // 9: stellwerk.central.v1.ShellRelayResponse.exit:type_name -> stellwerk.agent.v1.ShellExit
+	13, // 10: stellwerk.central.v1.ListConnectedResponse.agents:type_name -> stellwerk.central.v1.ConnectedAgent
+	0,  // 11: stellwerk.central.v1.SignerService.SignJobs:input_type -> stellwerk.central.v1.SignJobsRequest
+	3,  // 12: stellwerk.central.v1.SignerService.ListKeys:input_type -> stellwerk.central.v1.ListKeysRequest
+	5,  // 13: stellwerk.central.v1.GatewayControlService.ShellRelay:input_type -> stellwerk.central.v1.ShellRelayRequest
+	9,  // 14: stellwerk.central.v1.GatewayControlService.CancelJob:input_type -> stellwerk.central.v1.CancelJobRequest
+	11, // 15: stellwerk.central.v1.GatewayControlService.ListConnected:input_type -> stellwerk.central.v1.ListConnectedRequest
+	1,  // 16: stellwerk.central.v1.SignerService.SignJobs:output_type -> stellwerk.central.v1.SignJobsResponse
+	4,  // 17: stellwerk.central.v1.SignerService.ListKeys:output_type -> stellwerk.central.v1.ListKeysResponse
+	7,  // 18: stellwerk.central.v1.GatewayControlService.ShellRelay:output_type -> stellwerk.central.v1.ShellRelayResponse
+	10, // 19: stellwerk.central.v1.GatewayControlService.CancelJob:output_type -> stellwerk.central.v1.CancelJobResponse
+	12, // 20: stellwerk.central.v1.GatewayControlService.ListConnected:output_type -> stellwerk.central.v1.ListConnectedResponse
 	16, // [16:21] is the sub-list for method output_type
 	11, // [11:16] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
@@ -947,18 +947,18 @@ var file_stellwerk_internal_v1_control_proto_depIdxs = []int32{
 	0,  // [0:11] is the sub-list for field type_name
 }
 
-func init() { file_stellwerk_internal_v1_control_proto_init() }
-func file_stellwerk_internal_v1_control_proto_init() {
-	if File_stellwerk_internal_v1_control_proto != nil {
+func init() { file_stellwerk_central_v1_control_proto_init() }
+func file_stellwerk_central_v1_control_proto_init() {
+	if File_stellwerk_central_v1_control_proto != nil {
 		return
 	}
-	file_stellwerk_internal_v1_control_proto_msgTypes[5].OneofWrappers = []any{
+	file_stellwerk_central_v1_control_proto_msgTypes[5].OneofWrappers = []any{
 		(*ShellRelayRequest_Attach)(nil),
 		(*ShellRelayRequest_Input)(nil),
 		(*ShellRelayRequest_Resize)(nil),
 		(*ShellRelayRequest_Close)(nil),
 	}
-	file_stellwerk_internal_v1_control_proto_msgTypes[7].OneofWrappers = []any{
+	file_stellwerk_central_v1_control_proto_msgTypes[7].OneofWrappers = []any{
 		(*ShellRelayResponse_Ready)(nil),
 		(*ShellRelayResponse_Output)(nil),
 		(*ShellRelayResponse_Exit)(nil),
@@ -967,17 +967,17 @@ func file_stellwerk_internal_v1_control_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stellwerk_internal_v1_control_proto_rawDesc), len(file_stellwerk_internal_v1_control_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_stellwerk_central_v1_control_proto_rawDesc), len(file_stellwerk_central_v1_control_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   2,
 		},
-		GoTypes:           file_stellwerk_internal_v1_control_proto_goTypes,
-		DependencyIndexes: file_stellwerk_internal_v1_control_proto_depIdxs,
-		MessageInfos:      file_stellwerk_internal_v1_control_proto_msgTypes,
+		GoTypes:           file_stellwerk_central_v1_control_proto_goTypes,
+		DependencyIndexes: file_stellwerk_central_v1_control_proto_depIdxs,
+		MessageInfos:      file_stellwerk_central_v1_control_proto_msgTypes,
 	}.Build()
-	File_stellwerk_internal_v1_control_proto = out.File
-	file_stellwerk_internal_v1_control_proto_goTypes = nil
-	file_stellwerk_internal_v1_control_proto_depIdxs = nil
+	File_stellwerk_central_v1_control_proto = out.File
+	file_stellwerk_central_v1_control_proto_goTypes = nil
+	file_stellwerk_central_v1_control_proto_depIdxs = nil
 }

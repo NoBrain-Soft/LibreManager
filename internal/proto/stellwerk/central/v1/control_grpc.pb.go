@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             (unknown)
-// source: stellwerk/internal/v1/control.proto
+// source: stellwerk/central/v1/control.proto
 
-package internalv1
+package centralv1
 
 import (
 	context "context"
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SignerService_SignJobs_FullMethodName = "/stellwerk.internal.v1.SignerService/SignJobs"
-	SignerService_ListKeys_FullMethodName = "/stellwerk.internal.v1.SignerService/ListKeys"
+	SignerService_SignJobs_FullMethodName = "/stellwerk.central.v1.SignerService/SignJobs"
+	SignerService_ListKeys_FullMethodName = "/stellwerk.central.v1.SignerService/ListKeys"
 )
 
 // SignerServiceClient is the client API for SignerService service.
@@ -156,7 +156,7 @@ func _SignerService_ListKeys_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SignerService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "stellwerk.internal.v1.SignerService",
+	ServiceName: "stellwerk.central.v1.SignerService",
 	HandlerType: (*SignerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -169,13 +169,13 @@ var SignerService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "stellwerk/internal/v1/control.proto",
+	Metadata: "stellwerk/central/v1/control.proto",
 }
 
 const (
-	GatewayControlService_ShellRelay_FullMethodName    = "/stellwerk.internal.v1.GatewayControlService/ShellRelay"
-	GatewayControlService_CancelJob_FullMethodName     = "/stellwerk.internal.v1.GatewayControlService/CancelJob"
-	GatewayControlService_ListConnected_FullMethodName = "/stellwerk.internal.v1.GatewayControlService/ListConnected"
+	GatewayControlService_ShellRelay_FullMethodName    = "/stellwerk.central.v1.GatewayControlService/ShellRelay"
+	GatewayControlService_CancelJob_FullMethodName     = "/stellwerk.central.v1.GatewayControlService/CancelJob"
+	GatewayControlService_ListConnected_FullMethodName = "/stellwerk.central.v1.GatewayControlService/ListConnected"
 )
 
 // GatewayControlServiceClient is the client API for GatewayControlService service.
@@ -334,7 +334,7 @@ func _GatewayControlService_ListConnected_Handler(srv interface{}, ctx context.C
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var GatewayControlService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "stellwerk.internal.v1.GatewayControlService",
+	ServiceName: "stellwerk.central.v1.GatewayControlService",
 	HandlerType: (*GatewayControlServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -354,5 +354,5 @@ var GatewayControlService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "stellwerk/internal/v1/control.proto",
+	Metadata: "stellwerk/central/v1/control.proto",
 }

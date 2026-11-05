@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package stellwerk.internal.v1;
+package stellwerk.central.v1;
 
 import "stellwerk/agent/v1/gateway.proto";
 import "stellwerk/agent/v1/job.proto";
 
-option go_package = "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/internal/v1;internalv1";
+option go_package = "github.com/nobrain-soft/libremanager/internal/proto/stellwerk/central/v1;centralv1";
 
 // Services between central components. They are only ever served on unix
 // sockets inside a shared volume (never on a network listener).
