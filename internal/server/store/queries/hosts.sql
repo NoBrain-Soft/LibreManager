@@ -22,7 +22,8 @@ UPDATE hosts SET
 WHERE id = $1;
 
 -- name: UpdateHostOS :exec
-UPDATE hosts SET os_pretty_name = $2, primary_ip = coalesce(nullif(sqlc.arg('primary_ip')::text, ''), primary_ip), updated_at = now() WHERE id = $1;
+UPDATE hosts SET os_pretty_name = coalesce(nullif(sqlc.arg('os_pretty_name')::text, ''), os_pretty_name),
+    primary_ip = coalesce(nullif(sqlc.arg('primary_ip')::text, ''), primary_ip), updated_at = now() WHERE id = $1;
 
 -- name: SetHostDisconnected :exec
 UPDATE hosts SET connected = false, last_seen_at = now(), updated_at = now() WHERE id = $1;

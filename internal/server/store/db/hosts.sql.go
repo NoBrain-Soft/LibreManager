@@ -318,7 +318,8 @@ func (q *Queries) UpdateHostLabels(ctx context.Context, arg UpdateHostLabelsPara
 }
 
 const updateHostOS = `-- name: UpdateHostOS :exec
-UPDATE hosts SET os_pretty_name = $2, primary_ip = coalesce(nullif($3::text, ''), primary_ip), updated_at = now() WHERE id = $1
+UPDATE hosts SET os_pretty_name = coalesce(nullif($2::text, ''), os_pretty_name),
+    primary_ip = coalesce(nullif($3::text, ''), primary_ip), updated_at = now() WHERE id = $1
 `
 
 type UpdateHostOSParams struct {
