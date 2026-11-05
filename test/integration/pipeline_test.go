@@ -11,13 +11,16 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/nobrain-soft/libremanager/internal/agent/enroll"
@@ -123,14 +126,39 @@ func (staticFacts) Packages(context.Context) (*agentv1.InventorySection, error) 
 func (staticFacts) PackageDBFingerprint() string { return "x" }
 
 type world struct {
-	t       *testing.T
-	ctx     context.Context
-	st      *store.Store
-	signer  *signer.Service
-	hostID  uuid.UUID
-	pkg     *fakePkg
-	journal *memJournal
+	t          *testing.T
+	ctx        context.Context
+	st         *store.Store
+	signer     *signer.Service
+	hostID     uuid.UUID
+	pkg        *fakePkg
+	journal    *memJournal
+	controlSck string
+	dir        string
 }
+
+// shellUsers maps the unix account "ops" to an account the test may switch
+// to: uid 65534 when running as root, otherwise the current user.
+type shellUsers struct{}
+
+func opsUser() *user.User {
+	if os.Geteuid() == 0 {
+		return &user.User{Uid: "65534", Gid: "65534", Username: "ops", HomeDir: "/"}
+	}
+	return &user.User{Uid: strconv.Itoa(os.Getuid()), Gid: strconv.Itoa(os.Getgid()), Username: "ops", HomeDir: os.TempDir()}
+}
+
+func (shellUsers) Lookup(name string) (*user.User, error) {
+	if name == "ops" {
+		return opsUser(), nil
+	}
+	return nil, user.UnknownUserError(name)
+}
+func (shellUsers) GroupIDs(u *user.User) ([]string, error) { return []string{u.Gid}, nil }
+func (shellUsers) LookupGroup(name string) (*user.Group, error) {
+	return nil, user.UnknownGroupError(name)
+}
+func (shellUsers) HasLoginShell(*user.User) bool { return true }
 
 func setup(t *testing.T) *world {
 	t.Helper()
@@ -166,6 +194,8 @@ func setup(t *testing.T) *world {
 	}
 	go func() { _ = gw.Serve(ctx, ln) }()
 	go gw.RunBackground(ctx)
+	controlSck := filepath.Join(dir, "control.sock")
+	go func() { _ = gw.ServeControl(ctx, controlSck) }()
 	_, port, _ := net.SplitHostPort(ln.Addr().String())
 	central := "localhost:" + port
 
@@ -191,6 +221,7 @@ capabilities:
   inventory: true
   packages: { list: true, upgrade: true, install: false, remove: false }
   services: { control: true, allow: ["*.service"], deny: ["sshd.service"] }
+  shell: { enabled: true, allow_root: false, allowed_users: ["ops"] }
 `, central, pki.Fingerprint(p.Root.Cert))
 	if err := os.WriteFile(policyPath, []byte(policyYAML), 0o644); err != nil {
 		t.Fatal(err)
@@ -219,7 +250,8 @@ capabilities:
 	_ = os.MkdirAll(helperState, 0o700)
 	hs, err := helper.NewServer(helper.Config{PolicyPath: policyPath, HostIDPath: paths.HostIDFile, JobKeysDir: paths.JobKeysDir,
 		StateDir: helperState, AllowedUID: os.Getuid(), TimeSynced: func() (bool, error) { return true, nil },
-		PkgManager: pkg, Journal: jr, SkipOwnerChecks: true, Version: "itest"})
+		PkgManager: pkg, Journal: jr, SkipOwnerChecks: true, Version: "itest",
+		Users: shellUsers{}, LoginShell: func(*user.User) (string, error) { return "/bin/sh", nil }})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +277,7 @@ capabilities:
 	hc := &helperclient.Client{SocketPath: sock}
 	runner := &jobs.Runner{
 		Verifier: &envelope.Verifier{Keys: keys, HostID: res.HostID, Nonces: nonces},
-		Policy:   &policy.Evaluator{P: pol}, Limiter: policy.NewRateLimiter(pol.Limits.MaxJobsPerMinute, nil),
+		Policy:   &policy.Evaluator{P: pol, Users: shellUsers{}}, Limiter: policy.NewRateLimiter(pol.Limits.MaxJobsPerMinute, nil),
 		Helper: hc, Journal: jr,
 	}
 	agent, err := runtime.New(runtime.Config{Policy: pol, Paths: paths, Identity: state.NewIdentity(cert), Roots: roots, Version: "itest",
@@ -256,7 +288,8 @@ capabilities:
 	}
 	go func() { _ = agent.Run(ctx) }()
 
-	w := &world{t: t, ctx: ctx, st: st, signer: svc, hostID: uuid.MustParse(res.HostID), pkg: pkg, journal: jr}
+	w := &world{t: t, ctx: ctx, st: st, signer: svc, hostID: uuid.MustParse(res.HostID), pkg: pkg, journal: jr,
+		controlSck: controlSck, dir: dir}
 	w.waitFor("agent connected", func() bool {
 		h, err := st.Q.GetHost(ctx, w.hostID)
 		return err == nil && h.Connected
@@ -397,3 +430,16 @@ func TestSignedJobPipeline(t *testing.T) {
 	w.insert(wrongID, resp.GetEnvelopes()[0].GetSigned())
 	w.waitFor("wrong host rejected", func() bool { return w.target(wrongID).Status == "rejected" })
 }
+
+// signerClient adapts the in-process signer service to the client interface.
+type signerClient struct{ svc *signer.Service }
+
+func (s signerClient) SignJobs(ctx context.Context, in *centralv1.SignJobsRequest, _ ...grpc.CallOption) (*centralv1.SignJobsResponse, error) {
+	return s.svc.SignJobs(ctx, in)
+}
+
+func (s signerClient) ListKeys(ctx context.Context, in *centralv1.ListKeysRequest, _ ...grpc.CallOption) (*centralv1.ListKeysResponse, error) {
+	return s.svc.ListKeys(ctx, in)
+}
+
+func mustUUID(s string) uuid.UUID { return uuid.MustParse(s) }

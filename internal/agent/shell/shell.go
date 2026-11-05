@@ -49,6 +49,8 @@ func Relay(ctx context.Context, open Opener, grant *agentv1.ShellGrant, requeste
 	var last atomic.Int64
 	last.Store(time.Now().UnixNano())
 	errc := make(chan error, 3)
+	exited := make(chan struct{})
+	recvDone := make(chan struct{})
 
 	// PTY -> gateway. Only this goroutine sends after the banner.
 	go func() {
@@ -67,13 +69,14 @@ func Relay(ctx context.Context, open Opener, grant *agentv1.ShellGrant, requeste
 				_ = stream.Send(&agentv1.ShellSessionRequest{Payload: &agentv1.ShellSessionRequest_Exit{
 					Exit: &agentv1.ShellExit{Reason: "shell exited"}}})
 				_ = stream.CloseSend()
-				errc <- nil
+				close(exited)
 				return
 			}
 		}
 	}()
 	// gateway -> PTY
 	go func() {
+		defer close(recvDone)
 		for {
 			m, err := stream.Recv()
 			if err != nil {
@@ -118,6 +121,14 @@ func Relay(ctx context.Context, open Opener, grant *agentv1.ShellGrant, requeste
 	select {
 	case err := <-errc:
 		return err
+	case <-exited:
+		// Let the gateway drain the last output and the Exit frame before
+		// the deferred cancel resets the stream.
+		select {
+		case <-recvDone:
+		case <-time.After(5 * time.Second):
+		}
+		return nil
 	case <-ctx.Done():
 		return ctx.Err()
 	}
