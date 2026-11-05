@@ -1,0 +1,14 @@
+22 28 0:21 / /sys rw,nosuid,nodev,noexec,relatime shared:7 - sysfs sysfs rw
+23 28 0:22 / /proc rw,nosuid,nodev,noexec,relatime shared:13 - proc proc rw
+24 28 0:5 / /dev rw,nosuid,relatime shared:2 - devtmpfs udev rw,size=8126540k
+28 1 253:0 / / rw,relatime shared:1 - ext4 /dev/mapper/vg0-root rw,errors=remount-ro
+30 28 8:1 / /boot ro,relatime shared:30 - ext4 /dev/sda1 rw
+31 28 253:0 /srv/data /data rw,relatime shared:1 - ext4 /dev/mapper/vg0-root rw
+32 28 0:30 / /run rw,nosuid,nodev,noexec,relatime shared:5 - tmpfs tmpfs rw,size=1633740k,mode=755
+33 32 0:31 / /run/user/1000 rw,nosuid,nodev,relatime shared:250 - tmpfs tmpfs rw,size=1633736k
+34 24 0:32 / /dev/shm rw,nosuid,nodev shared:4 - tmpfs tmpfs rw
+35 28 7:0 / /snap/core/123 ro,nodev,relatime shared:40 - squashfs /dev/loop0 ro
+36 28 0:40 / /var/lib/docker/overlay2/abc/merged rw,relatime - overlay overlay rw,lowerdir=x
+37 28 8:2 / /home rw,relatime shared:31 - xfs /dev/sda2 rw
+38 28 0:60 / /mnt/nfs rw,relatime shared:34 - nfs4 server:/export rw,vers=4.2
+39 28 0:61 / /mnt/hung rw,relatime shared:35 - nfs4 dead:/export rw,vers=4.2
