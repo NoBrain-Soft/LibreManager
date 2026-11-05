@@ -2,7 +2,7 @@
 # terminates its own mTLS and is published directly by its container.
 {
 	admin off
-	email {$STELLWERK_ACME_EMAIL}
+	email {$STELLWERK_ACME_EMAIL:hostmaster@invalid}
 }
 
 {$STELLWERK_FQDN} {

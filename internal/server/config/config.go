@@ -110,6 +110,12 @@ func (c *Config) PublicHost() string {
 	return u.Hostname()
 }
 
+// PublicOriginHost returns host[:port] of PublicURL (for WebSocket origin checks).
+func (c *Config) PublicOriginHost() string {
+	u, _ := url.Parse(c.PublicURL)
+	return u.Host
+}
+
 // AgentHost returns the host part of AgentEndpoint.
 func (c *Config) AgentHost() string {
 	h, _, _ := net.SplitHostPort(c.AgentEndpoint)

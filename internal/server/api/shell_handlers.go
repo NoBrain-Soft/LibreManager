@@ -206,7 +206,7 @@ func (s *Server) ConnectShell(w http.ResponseWriter, r *http.Request, hostID api
 		writeError(w, http.StatusServiceUnavailable, "unavailable", "gateway unavailable")
 		return
 	}
-	ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: []string{s.d.Cfg.PublicHost()}})
+	ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: []string{s.d.Cfg.PublicOriginHost()}})
 	if err != nil {
 		return
 	}
@@ -472,7 +472,7 @@ func (s *Server) GetShellRecording(w http.ResponseWriter, r *http.Request, id ap
 func (s *Server) ConnectEvents(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	p := principalFrom(ctx)
-	ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: []string{s.d.Cfg.PublicHost()}})
+	ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{OriginPatterns: []string{s.d.Cfg.PublicOriginHost()}})
 	if err != nil {
 		return
 	}

@@ -70,7 +70,8 @@ AGENT_ENDPOINT=${AGENT_ENDPOINT:-$FQDN:8443}
 [[ "$AGENT_ENDPOINT" =~ ^[A-Za-z0-9.-]+:[0-9]{1,5}$ ]] || die "invalid --agent-endpoint"
 AGENT_PORT=${AGENT_ENDPOINT##*:}
 case "$TLS_MODE" in
-  internal|acme) ;;
+  internal) ;;
+  acme) [ -n "$ACME_EMAIL" ] || die "--tls acme needs --acme-email" ;;
   custom) [ -r "$CERT" ] && [ -r "$KEY" ] || die "--tls custom needs readable --cert and --key" ;;
   *) die "--tls must be internal, acme or custom" ;;
 esac
@@ -194,9 +195,7 @@ for _ in $(seq 1 60); do
   sleep 2
 done
 log "initializing (migrations, CA, job-signing key, break-glass admin)"
-INIT_OUT=$("${COMPOSE[@]}" run --rm --no-deps \
-  -v "$PREFIX/secrets:/var/lib/stellwerk/secrets" -v "$PREFIX/data:/var/lib/stellwerk/data" \
-  api init)
+INIT_OUT=$("${COMPOSE[@]}" --profile init run --rm init)
 echo "$INIT_OUT" | grep -v "One-time password" || true
 
 log "starting the stack"

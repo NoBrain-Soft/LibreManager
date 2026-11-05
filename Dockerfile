@@ -21,9 +21,14 @@ ARG VERSION=dev
 ARG COMMIT=unknown
 RUN go build -tags webui -ldflags "-s -w -X github.com/nobrain-soft/libremanager/internal/common/version.Version=${VERSION} -X github.com/nobrain-soft/libremanager/internal/common/version.Commit=${COMMIT}" \
       -o /out/stellwerk-server ./cmd/stellwerk-server
+# Writable mount points owned by the runtime user, so named volumes mounted
+# there inherit the ownership (distroless has no shell to mkdir later).
+RUN mkdir -p /out/run/stellwerk /out/var/lib/stellwerk
 
 FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab
 COPY --from=build /out/stellwerk-server /usr/bin/stellwerk-server
+COPY --from=build --chown=65532:65532 /out/run/stellwerk /run/stellwerk
+COPY --from=build --chown=65532:65532 /out/var/lib/stellwerk /var/lib/stellwerk
 USER 65532:65532
 ENTRYPOINT ["/usr/bin/stellwerk-server"]
 CMD ["api"]

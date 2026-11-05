@@ -49,6 +49,24 @@ services:
     networks: [frontend]
     depends_on: [api]
 
+  # One-shot: `docker compose run --rm init` (migrations, CA, keys, admin).
+  init:
+    <<: *hardening
+    profiles: ["init"]
+    restart: "no"
+    image: ${STELLWERK_IMAGE:?set STELLWERK_IMAGE to the server image (with digest)}
+    command: ["init"]
+    user: "65532:65532"
+    environment:
+      <<: *server-env
+    volumes:
+      - ./secrets:/var/lib/stellwerk/secrets
+      - ./data:/var/lib/stellwerk/data
+      - ./secrets/db:/run/secrets/db:ro
+    networks: [backend]
+    depends_on:
+      postgres: { condition: service_healthy }
+
   api:
     <<: *hardening
     image: ${STELLWERK_IMAGE:?set STELLWERK_IMAGE to the server image (with digest)}
