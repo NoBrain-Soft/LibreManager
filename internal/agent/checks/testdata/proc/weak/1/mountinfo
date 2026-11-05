@@ -1,0 +1,3 @@
+22 1 8:1 / / rw,relatime shared:1 - ext4 /dev/sda1 rw,errors=remount-ro
+30 22 0:26 / /tmp rw,nosuid,nodev,relatime shared:14 - tmpfs tmpfs rw,size=1048576k
+31 30 0:26 / /tmp rw,nodev,relatime shared:14 - tmpfs tmpfs rw,size=1048576k

@@ -1,0 +1,2 @@
+22 1 8:1 / / rw,relatime shared:1 - ext4 /dev/sda1 rw
+90 22 8:1 /tmp/systemd-private-abc/tmp /tmp rw,relatime shared:1 - ext4 /dev/sda1 rw
