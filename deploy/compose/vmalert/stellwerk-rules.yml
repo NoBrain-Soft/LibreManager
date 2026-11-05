@@ -82,7 +82,7 @@ groups:
           summary: "Probe {{ $labels.probe }} failing on {{ $labels.hostname }}"
 
       - alert: ProbeCertificateExpiring
-        expr: stellwerk_probe_cert_expiry_seconds < 14 * 86400
+        expr: stellwerk_probe_cert_expiry_seconds - time() < 14 * 86400
         for: 1h
         labels: { severity: warning }
         annotations:

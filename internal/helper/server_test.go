@@ -947,10 +947,10 @@ func TestSocketOwners(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := map[string]string{
-		"tcp:0.0.0.0:22":    "sshd(812)",
-		"tcp:127.0.0.1:25":  "master(900)",
-		"tcp6:[::]:22":      "sshd(812)",
-		"udp:127.0.0.53:53": "systemd-resolve(901)",
+		"12345": "812/sshd",
+		"12346": "900/master",
+		"12347": "812/sshd",
+		"12348": "901/systemd-resolve",
 	}
 	if fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Fatalf("got %v\nwant %v", got, want)

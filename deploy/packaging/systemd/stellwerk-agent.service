@@ -18,7 +18,8 @@ UMask=0077
 # Sandboxing (ARCHITECTURE.md §5.1)
 NoNewPrivileges=yes
 ProtectSystem=strict
-ProtectHome=yes
+# read-only (not "yes") so /home filesystem usage is visible to the collectors.
+ProtectHome=read-only
 PrivateTmp=yes
 PrivateDevices=yes
 ReadWritePaths=/var/lib/stellwerk-agent

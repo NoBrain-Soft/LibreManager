@@ -533,7 +533,7 @@ func (*HelperResponse_Pong) isHelperResponse_Result() {}
 type PrivilegedData struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Kind  PrivilegedKind         `protobuf:"varint,1,opt,name=kind,proto3,enum=stellwerk.helper.v1.PrivilegedKind" json:"kind,omitempty"`
-	// Key -> value entries (sshd config, socket owners "proto:addr:port" -> process).
+	// Key -> value entries (sshd config; socket owners: inode -> "PID/name").
 	Values map[string]string `protobuf:"bytes,2,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Usernames with an empty password hash.
 	EmptyPasswordUsers []string `protobuf:"bytes,3,rep,name=empty_password_users,json=emptyPasswordUsers,proto3" json:"empty_password_users,omitempty"`

@@ -67,7 +67,7 @@ message HelperResponse {
 
 message PrivilegedData {
   PrivilegedKind kind = 1;
-  // Key -> value entries (sshd config, socket owners "proto:addr:port" -> process).
+  // Key -> value entries (sshd config; socket owners: inode -> "PID/name").
   map<string, string> values = 2;
   // Usernames with an empty password hash.
   repeated string empty_password_users = 3;

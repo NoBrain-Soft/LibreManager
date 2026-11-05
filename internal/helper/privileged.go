@@ -244,8 +244,10 @@ func stripSudoComment(t string) string {
 	return t
 }
 
-// socketOwners maps listening sockets ("tcp:0.0.0.0:22") to their owning
-// process ("sshd(812)") by matching /proc/net/* inodes with /proc/*/fd.
+// socketOwners maps the inodes of listening sockets (decimal, as in
+// /proc/net/*) to their owning process in netstat style ("812/sshd") by
+// matching /proc/net/* inodes with /proc/*/fd. The agent core merges this
+// with its own unprivileged view by inode.
 func socketOwners(proc string) (map[string]string, error) {
 	inodes := map[string]string{} // inode -> key
 	for _, t := range []struct{ file, proto, state string }{
@@ -297,9 +299,10 @@ func socketOwners(proc string) (map[string]string, error) {
 			if !ok {
 				continue
 			}
-			if key, ok := inodes[strings.TrimSuffix(ino, "]")]; ok && out[key] == "" {
+			inode := strings.TrimSuffix(ino, "]")
+			if _, ok := inodes[inode]; ok && out[inode] == "" {
 				comm, _ := readFileCapped(filepath.Join(proc, pid, "comm"), 64)
-				out[key] = clean(strings.TrimSpace(string(comm)), 32) + "(" + pid + ")"
+				out[inode] = pid + "/" + clean(strings.TrimSpace(string(comm)), 32)
 			}
 		}
 	}

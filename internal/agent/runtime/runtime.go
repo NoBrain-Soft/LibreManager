@@ -86,6 +86,8 @@ type Config struct {
 	HelperAvailable func(ctx context.Context) bool
 	// Runner executes jobs; Emit and Local/Shell are wired by New.
 	Runner *jobs.Runner
+	// OnProbes is called when central sends a new probe configuration.
+	OnProbes func([]*agentv1.Probe)
 	Now    func() time.Time
 	// Backoff bounds (defaults 1 s → 5 min).
 	MinBackoff, MaxBackoff time.Duration
@@ -342,6 +344,9 @@ func (a *Agent) applySettings(st *agentv1.AgentSettings) {
 	}
 	if len(st.GetProbes()) > 0 {
 		a.probes = st.GetProbes()
+		if a.cfg.OnProbes != nil {
+			a.cfg.OnProbes(a.probes)
+		}
 	}
 }
 
@@ -526,6 +531,9 @@ func (a *Agent) SetProbes(p []*agentv1.Probe) {
 	a.mu.Lock()
 	a.probes = p
 	a.mu.Unlock()
+	if a.cfg.OnProbes != nil {
+		a.cfg.OnProbes(p)
+	}
 }
 
 // Probes returns the configured probes.

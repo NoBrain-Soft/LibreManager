@@ -127,6 +127,6 @@ func setSize(f *os.File, cols, rows uint32) error {
 	if cols == 0 || rows == 0 || cols > 1000 || rows > 1000 {
 		return nil
 	}
-	ws := &unix.Winsize{Col: uint16(cols), Row: uint16(rows)} //nolint:gosec // bounded above
+	ws := &unix.Winsize{Col: uint16(cols), Row: uint16(rows)}     //nolint:gosec // bounded above
 	return unix.IoctlSetWinsize(int(f.Fd()), unix.TIOCSWINSZ, ws) //nolint:gosec // fd fits in int
 }
