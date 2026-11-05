@@ -17,10 +17,12 @@ homepage: https://github.com/NoBrain-Soft/LibreManager
 license: Proprietary (internal)
 
 contents:
-  - src: ./bin/linux_${ARCH}/stellwerk-agent
+  # The Makefile stages bin/linux_<arch>/* into bin/pkg/ per architecture
+  # (nfpm does not expand variables in src paths).
+  - src: ./bin/pkg/stellwerk-agent
     dst: /usr/bin/stellwerk-agent
     file_info: { mode: 0755 }
-  - src: ./bin/linux_${ARCH}/stellwerk-agent-helper
+  - src: ./bin/pkg/stellwerk-agent-helper
     dst: /usr/libexec/stellwerk/stellwerk-agent-helper
     file_info: { mode: 0755 }
   - src: ./deploy/packaging/systemd/stellwerk-agent.service

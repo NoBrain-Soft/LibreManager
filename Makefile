@@ -103,6 +103,7 @@ packages: agent
 	@mkdir -p dist
 	@for a in $(ARCHES); do \
 	  rpmarch=$$( [ $$a = amd64 ] && echo x86_64 || echo aarch64 ); \
+	  mkdir -p bin/pkg && cp bin/linux_$$a/stellwerk-agent bin/linux_$$a/stellwerk-agent-helper bin/pkg/ || exit 1; \
 	  for fmt in deb rpm; do \
 	    ARCH=$$a VERSION=$${VERSION#v} $(GO) run github.com/goreleaser/nfpm/v2/cmd/nfpm@v2.48.0 pkg \
 	      --config deploy/packaging/nfpm.yaml --packager $$fmt --target dist/ || exit 1; \
