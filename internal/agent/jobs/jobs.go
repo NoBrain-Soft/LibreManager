@@ -52,6 +52,9 @@ type Runner struct {
 	Now  func() time.Time
 	// MaxConcurrent bounds parallel jobs (default 4).
 	MaxConcurrent int
+	// AfterJob is called after a verified job finished (e.g. to re-report
+	// pending updates after package operations). May be nil.
+	AfterJob func(job *agentv1.Job, fin *agentv1.JobFinished)
 
 	mu      sync.Mutex
 	running map[string]context.CancelFunc
@@ -191,6 +194,9 @@ func (r *Runner) Handle(ctx context.Context, sj *agentv1.SignedJob) {
 		}
 		r.journal(journal.PriInfo, fmt.Sprintf("Stellwerk job %s finished: %s", job.GetJobId(), fin.GetStatus()), job, "finished")
 		r.emit(job.GetJobId(), fin)
+		if r.AfterJob != nil {
+			r.AfterJob(job, fin)
+		}
 	}()
 }
 

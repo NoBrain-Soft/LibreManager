@@ -77,7 +77,7 @@ make e2e            # VM-based end-to-end tests (Incus/Vagrant)
 - [x] Agent: enroll, connect/backoff, collectors, spool, inventory
 - [x] Gateway → VictoriaMetrics remote-write with server-side labels
 - [x] API: local auth (Argon2id + WebAuthn/TOTP), sessions, hosts, enrollment tokens, metrics query proxy
-- [ ] Web: login, host list, host detail (overview, charts, inventory), enrollment UI — in progress
+- [x] Web: login, host list, host detail (overview, charts, inventory), enrollment UI (+ jobs, updates, shell, audit, admin)
 - [x] `deploy/install-central.sh`, `deploy/agent-install.sh.tmpl`, nfpm packaging + systemd units (hardened)
 - [x] `make agent-bench` passing budget (14.6 MB binary, 17.9 MB RSS, 0.03 % CPU measured)
 - [ ] Exit criterion verified on 3 VMs (Debian 13, Ubuntu 24.04, Rocky 9) — `make e2e` harness started

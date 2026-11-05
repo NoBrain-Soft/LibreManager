@@ -141,6 +141,14 @@ func New(cfg Config) (*Agent, error) {
 	}
 	cfg.Runner.Local = a
 	cfg.Runner.Shell = a.relayShell
+	cfg.Runner.AfterJob = func(job *agentv1.Job, _ *agentv1.JobFinished) {
+		switch job.GetAction().(type) {
+		case *agentv1.Job_PkgRefresh, *agentv1.Job_PkgUpgrade, *agentv1.Job_PkgInstall, *agentv1.Job_PkgRemove:
+			if s := a.currentSession(); s != nil {
+				go a.sendUpdates(s.ctx, s)
+			}
+		}
+	}
 	return a, nil
 }
 

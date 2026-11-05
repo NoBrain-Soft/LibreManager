@@ -26,8 +26,8 @@ Browser ──HTTPS──▶ Caddy ──▶ stellwerk-server api ──unix soc
 | Phase | Scope | State |
 |-------|-------|-------|
 | 0 | Repo, contracts (protobuf, OpenAPI), envelope + PKI, migrations, CI, ADRs | done |
-| 1 | Init, gateway (enroll/connect/renew/revocation), agent (collectors, spool, inventory), remote-write, API with local auth, web UI, installers, packaging | done (pending VM validation) |
-| 2 | Signer, signed jobs, helper with apt/dnf/services/reboot, job framework, audit chain | done (syslog export open) |
+| 1 | Init, gateway (enroll/connect/renew/revocation), agent (collectors, spool, inventory), remote-write, API with local auth, web UI, installers, packaging | done; smoke-tested with real binaries, VM validation pending |
+| 2 | Signer, signed jobs, helper with apt/dnf/services/reboot, job framework, audit chain + syslog export | done |
 | 3 | Remote shell (PTY via helper, dedicated stream, recordings), RBAC scopes, step-up | done (OIDC deferred, ADR-0009) |
 | 4 | Security checks, alerting + notifications | checks + alerting done; Grype vulnerability worker open |
 | 5–6 | Patch policies/rings, self-update, 4-eyes, scripts, HA, … | not started |

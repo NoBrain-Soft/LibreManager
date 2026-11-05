@@ -62,7 +62,7 @@ func (s *Server) nextState(ctx context.Context, u *db.User, mfaVerified bool) st
 
 func (s *Server) mfaMethods(ctx context.Context, u *db.User) *[]apigen.LoginResultMfaMethods {
 	_, totp, n := s.hasFactors(ctx, u)
-	var m []apigen.LoginResultMfaMethods
+	m := []apigen.LoginResultMfaMethods{}
 	if n > 0 {
 		m = append(m, apigen.Webauthn)
 	}
