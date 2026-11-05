@@ -1,0 +1,1742 @@
+openapi: 3.0.3
+# Note: authored as OpenAPI 3.0.3 (not 3.1) because the code generators in
+# the fixed stack (oapi-codegen, openapi-typescript) have complete 3.0
+# support. Semantics are identical for this API.
+info:
+  title: Stellwerk API
+  version: 0.1.0
+  description: |
+    REST API of the Stellwerk central server (ARCHITECTURE.md §5.3).
+
+    Authentication: server-side session referenced by the HttpOnly cookie
+    `__Host-stellwerk_session` (Secure, SameSite=Strict). State-changing
+    requests (POST, PUT, PATCH, DELETE) must carry the session's CSRF token
+    in the `X-CSRF-Token` header (returned by `GET /auth/session`).
+
+    High-risk operations (shell, package install/remove, user admin)
+    require a recent step-up authentication (5 minutes).
+servers:
+  - url: /api/v1
+security:
+  - sessionCookie: []
+tags:
+  - name: auth
+  - name: users
+  - name: hosts
+  - name: groups
+  - name: enrollment
+  - name: jobs
+  - name: updates
+  - name: shell
+  - name: audit
+  - name: alerts
+  - name: security
+  - name: system
+
+paths:
+  # ---------------------------------------------------------------- system
+  /system/info:
+    get:
+      tags: [system]
+      operationId: getSystemInfo
+      responses:
+        "200":
+          description: Server information
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SystemInfo" }
+        default: { $ref: "#/components/responses/Error" }
+  /settings:
+    get:
+      tags: [system]
+      operationId: getSettings
+      responses:
+        "200":
+          description: Settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
+        default: { $ref: "#/components/responses/Error" }
+    put:
+      tags: [system]
+      operationId: updateSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Settings" }
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
+        default: { $ref: "#/components/responses/Error" }
+  /settings/notifications/test:
+    post:
+      tags: [system]
+      operationId: testNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NotificationTestRequest" }
+      responses:
+        "204": { description: Test notification sent }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ------------------------------------------------------------------ auth
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Login step result (a session cookie is set)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResult" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      responses:
+        "204": { description: Logged out }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/session:
+    get:
+      tags: [auth]
+      operationId: getSession
+      responses:
+        "200":
+          description: Current session
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionInfo" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/password:
+    post:
+      tags: [auth]
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangePasswordRequest" }
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResult" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/mfa/totp:
+    post:
+      tags: [auth]
+      operationId: verifyTotp
+      description: Complete login (session state pending_mfa) or step-up with a TOTP code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TotpCode" }
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResult" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/mfa/webauthn/begin:
+    post:
+      tags: [auth]
+      operationId: beginWebauthnLogin
+      description: Start a WebAuthn assertion for login (pending_mfa) or step-up.
+      responses:
+        "200":
+          description: Assertion options (PublicKeyCredentialRequestOptions as JSON)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebauthnOptions" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/mfa/webauthn/finish:
+    post:
+      tags: [auth]
+      operationId: finishWebauthnLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebauthnCredentialResponse" }
+      responses:
+        "200":
+          description: Verified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResult" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/totp/enroll:
+    post:
+      tags: [auth]
+      operationId: beginTotpEnrollment
+      responses:
+        "200":
+          description: New TOTP secret (shown once; confirm with a code)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TotpEnrollment" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/totp/confirm:
+    post:
+      tags: [auth]
+      operationId: confirmTotpEnrollment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TotpCode" }
+      responses:
+        "200":
+          description: TOTP enabled
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResult" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/totp:
+    delete:
+      tags: [auth]
+      operationId: disableTotp
+      description: Requires step-up. Fails if it would leave an MFA-required user without a factor.
+      responses:
+        "204": { description: TOTP disabled }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/webauthn/register/begin:
+    post:
+      tags: [auth]
+      operationId: beginWebauthnRegistration
+      responses:
+        "200":
+          description: Creation options (PublicKeyCredentialCreationOptions as JSON)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebauthnOptions" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/webauthn/register/finish:
+    post:
+      tags: [auth]
+      operationId: finishWebauthnRegistration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/WebauthnRegistrationFinish" }
+      responses:
+        "200":
+          description: Credential registered
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResult" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/webauthn/credentials:
+    get:
+      tags: [auth]
+      operationId: listWebauthnCredentials
+      responses:
+        "200":
+          description: Registered security keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WebauthnCredential" }
+        default: { $ref: "#/components/responses/Error" }
+  /auth/webauthn/credentials/{credentialId}:
+    parameters:
+      - $ref: "#/components/parameters/CredentialId"
+    delete:
+      tags: [auth]
+      operationId: deleteWebauthnCredential
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ----------------------------------------------------------------- users
+  /users:
+    get:
+      tags: [users]
+      operationId: listUsers
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/User" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [users]
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserCreate" }
+      responses:
+        "201":
+          description: Created; the one-time password is shown once
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserCreated" }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      tags: [users]
+      operationId: getUser
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        default: { $ref: "#/components/responses/Error" }
+    patch:
+      tags: [users]
+      operationId: updateUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserUpdate" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [users]
+      operationId: deleteUser
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{userId}/reset-password:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    post:
+      tags: [users]
+      operationId: resetUserPassword
+      responses:
+        "200":
+          description: New one-time password (shown once)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OneTimePassword" }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{userId}/reset-mfa:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    post:
+      tags: [users]
+      operationId: resetUserMfa
+      responses:
+        "204": { description: All MFA factors removed; user must enroll again }
+        default: { $ref: "#/components/responses/Error" }
+  /users/{userId}/role-bindings:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      tags: [users]
+      operationId: getUserRoleBindings
+      responses:
+        "200":
+          description: Role bindings
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RoleBinding" }
+        default: { $ref: "#/components/responses/Error" }
+    put:
+      tags: [users]
+      operationId: setUserRoleBindings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              maxItems: 100
+              items: { $ref: "#/components/schemas/RoleBindingInput" }
+      responses:
+        "200":
+          description: Role bindings replaced
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/RoleBinding" }
+        default: { $ref: "#/components/responses/Error" }
+  /roles:
+    get:
+      tags: [users]
+      operationId: listRoles
+      responses:
+        "200":
+          description: Roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Role" }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ---------------------------------------------------------------- groups
+  /host-groups:
+    get:
+      tags: [groups]
+      operationId: listHostGroups
+      responses:
+        "200":
+          description: Host groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/HostGroup" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [groups]
+      operationId: createHostGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HostGroupInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HostGroup" }
+        default: { $ref: "#/components/responses/Error" }
+  /host-groups/{groupId}:
+    parameters:
+      - $ref: "#/components/parameters/GroupId"
+    patch:
+      tags: [groups]
+      operationId: updateHostGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HostGroupInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HostGroup" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [groups]
+      operationId: deleteHostGroup
+      responses:
+        "204": { description: Deleted }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ----------------------------------------------------------------- hosts
+  /hosts:
+    get:
+      tags: [hosts]
+      operationId: listHosts
+      parameters:
+        - name: q
+          in: query
+          description: Substring match on hostname/fqdn
+          schema: { type: string, maxLength: 128 }
+        - name: status
+          in: query
+          schema: { $ref: "#/components/schemas/HostStatus" }
+        - name: group_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Hosts visible to the caller
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Host" }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+    get:
+      tags: [hosts]
+      operationId: getHost
+      responses:
+        "200":
+          description: Host
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Host" }
+        default: { $ref: "#/components/responses/Error" }
+    patch:
+      tags: [hosts]
+      operationId: updateHost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HostUpdate" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Host" }
+        default: { $ref: "#/components/responses/Error" }
+    delete:
+      tags: [hosts]
+      operationId: decommissionHost
+      description: Revokes all certificates of the host and marks it decommissioned.
+      responses:
+        "204": { description: Decommissioned }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}/inventory:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+    get:
+      tags: [hosts]
+      operationId: getHostInventory
+      responses:
+        "200":
+          description: Latest inventory sections
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Inventory" }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}/packages:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+    get:
+      tags: [hosts]
+      operationId: listHostPackages
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string, maxLength: 128 }
+      responses:
+        "200":
+          description: Installed packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Package" }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}/updates:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+    get:
+      tags: [updates]
+      operationId: getHostUpdates
+      responses:
+        "200":
+          description: Pending updates
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HostUpdates" }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}/processes:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+    get:
+      tags: [hosts]
+      operationId: getHostProcesses
+      responses:
+        "200":
+          description: Latest top-N process snapshot
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProcessSnapshot" }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}/checks:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+    get:
+      tags: [security]
+      operationId: getHostChecks
+      responses:
+        "200":
+          description: Latest security check results
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CheckResult" }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}/metrics/{panel}:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+      - name: panel
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/MetricsPanel" }
+      - name: start
+        in: query
+        required: true
+        description: Unix seconds
+        schema: { type: integer, format: int64 }
+      - name: end
+        in: query
+        required: true
+        description: Unix seconds
+        schema: { type: integer, format: int64 }
+      - name: step
+        in: query
+        description: Seconds (default chosen from the range)
+        schema: { type: integer, minimum: 15, maximum: 86400 }
+    get:
+      tags: [hosts]
+      operationId: getHostMetrics
+      description: |
+        Predefined metric panel for one host. Queries are built server-side
+        with the host label injected, so callers cannot query other hosts.
+      responses:
+        "200":
+          description: Time series
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MetricsResponse" }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}/shell:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+    post:
+      tags: [shell]
+      operationId: createShellSession
+      description: Requires shell.open on the host and a recent step-up.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ShellSessionCreate" }
+      responses:
+        "201":
+          description: Session granted; connect to the WebSocket URL next
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ShellSession" }
+        default: { $ref: "#/components/responses/Error" }
+  /hosts/{hostId}/shell/{sessionId}:
+    parameters:
+      - $ref: "#/components/parameters/HostId"
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [shell]
+      operationId: connectShell
+      description: |
+        WebSocket upgrade. Client → server messages are JSON
+        `{"type":"input","data":"<base64>"}` and
+        `{"type":"resize","cols":N,"rows":N}`; server → client messages are
+        `{"type":"output","data":"<base64>"}`, `{"type":"ready"}` and
+        `{"type":"exit","code":N,"reason":"..."}`.
+      responses:
+        "101": { description: Switching protocols }
+        default: { $ref: "#/components/responses/Error" }
+  /shell-sessions:
+    get:
+      tags: [shell]
+      operationId: listShellSessions
+      parameters:
+        - name: host_id
+          in: query
+          schema: { type: string, format: uuid }
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Shell sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ShellSession" }
+        default: { $ref: "#/components/responses/Error" }
+  /shell-sessions/{sessionId}:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    delete:
+      tags: [shell]
+      operationId: terminateShellSession
+      description: Kill switch for a running session.
+      responses:
+        "204": { description: Terminated }
+        default: { $ref: "#/components/responses/Error" }
+  /shell-sessions/{sessionId}/recording:
+    parameters:
+      - $ref: "#/components/parameters/SessionId"
+    get:
+      tags: [shell]
+      operationId: getShellRecording
+      responses:
+        "200":
+          description: Decrypted asciicast v2 recording
+          content:
+            application/x-asciicast:
+              schema: { type: string, format: binary }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ------------------------------------------------------------ enrollment
+  /enrollment-tokens:
+    get:
+      tags: [enrollment]
+      operationId: listEnrollmentTokens
+      responses:
+        "200":
+          description: Tokens (secrets are never returned)
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/EnrollmentToken" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [enrollment]
+      operationId: createEnrollmentToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EnrollmentTokenCreate" }
+      responses:
+        "201":
+          description: Created; the secret and install command are shown once
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnrollmentTokenCreated" }
+        default: { $ref: "#/components/responses/Error" }
+  /enrollment-tokens/{tokenId}:
+    parameters:
+      - name: tokenId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    delete:
+      tags: [enrollment]
+      operationId: revokeEnrollmentToken
+      responses:
+        "204": { description: Revoked }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ------------------------------------------------------------------ jobs
+  /jobs:
+    get:
+      tags: [jobs]
+      operationId: listJobs
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - name: host_id
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Jobs, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Job" }
+        default: { $ref: "#/components/responses/Error" }
+    post:
+      tags: [jobs]
+      operationId: createJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JobCreate" }
+      responses:
+        "201":
+          description: Job created and dispatched
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+        default: { $ref: "#/components/responses/Error" }
+  /jobs/{jobId}:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    get:
+      tags: [jobs]
+      operationId: getJob
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+        default: { $ref: "#/components/responses/Error" }
+  /jobs/{jobId}/targets:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    get:
+      tags: [jobs]
+      operationId: listJobTargets
+      responses:
+        "200":
+          description: Per-host status
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/JobTarget" }
+        default: { $ref: "#/components/responses/Error" }
+  /jobs/{jobId}/targets/{hostId}/output:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+      - $ref: "#/components/parameters/HostId"
+      - name: after
+        in: query
+        description: Return chunks with id greater than this
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [jobs]
+      operationId: getJobOutput
+      responses:
+        "200":
+          description: Output chunks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/JobOutputChunk" }
+        default: { $ref: "#/components/responses/Error" }
+  /jobs/{jobId}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    post:
+      tags: [jobs]
+      operationId: cancelJob
+      responses:
+        "204": { description: Cancel requested }
+        default: { $ref: "#/components/responses/Error" }
+
+  # --------------------------------------------------------------- updates
+  /updates:
+    get:
+      tags: [updates]
+      operationId: listFleetUpdates
+      responses:
+        "200":
+          description: Pending updates per host
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/HostUpdatesSummary" }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ----------------------------------------------------------------- audit
+  /audit:
+    get:
+      tags: [audit]
+      operationId: listAudit
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - name: before_id
+          in: query
+          schema: { type: integer, format: int64 }
+        - name: actor
+          in: query
+          schema: { type: string, maxLength: 128 }
+        - name: action
+          in: query
+          schema: { type: string, maxLength: 128 }
+      responses:
+        "200":
+          description: Audit entries, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AuditEntry" }
+        default: { $ref: "#/components/responses/Error" }
+  /audit/verify:
+    get:
+      tags: [audit]
+      operationId: verifyAudit
+      responses:
+        "200":
+          description: Hash chain verification result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuditVerifyResult" }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ---------------------------------------------------------------- alerts
+  /alerts:
+    get:
+      tags: [alerts]
+      operationId: listAlerts
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [firing, resolved] }
+      responses:
+        "200":
+          description: Alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Alert" }
+        default: { $ref: "#/components/responses/Error" }
+  /alertmanager/webhook:
+    post:
+      tags: [alerts]
+      operationId: alertmanagerWebhook
+      security:
+        - webhookBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlertmanagerPayload" }
+      responses:
+        "204": { description: Accepted }
+        default: { $ref: "#/components/responses/Error" }
+
+  # -------------------------------------------------------------- security
+  /security/summary:
+    get:
+      tags: [security]
+      operationId: getSecuritySummary
+      responses:
+        "200":
+          description: Fleet security overview
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecuritySummary" }
+        default: { $ref: "#/components/responses/Error" }
+
+  # ---------------------------------------------------------------- events
+  /events:
+    get:
+      tags: [system]
+      operationId: connectEvents
+      description: |
+        WebSocket upgrade. Server → client JSON messages of type `Event`.
+      responses:
+        "101": { description: Switching protocols }
+        default: { $ref: "#/components/responses/Error" }
+
+  /dashboard:
+    get:
+      tags: [system]
+      operationId: getDashboard
+      responses:
+        "200":
+          description: Fleet overview
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+        default: { $ref: "#/components/responses/Error" }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-stellwerk_session
+    webhookBearer:
+      type: http
+      scheme: bearer
+
+  parameters:
+    HostId:
+      name: hostId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    GroupId:
+      name: groupId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CredentialId:
+      name: credentialId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Machine-readable code (unauthenticated, forbidden, stepup_required, not_found, invalid, conflict, rate_limited, internal)
+            message: { type: string }
+
+    # ----- system
+    SystemInfo:
+      type: object
+      required: [version, ca_fingerprint, agent_endpoint, public_url]
+      properties:
+        version: { type: string }
+        ca_fingerprint: { type: string }
+        agent_endpoint: { type: string, description: "host:port agents dial" }
+        public_url: { type: string }
+        connected_agents: { type: integer }
+    Settings:
+      type: object
+      required: [session, security, retention, notifications, shell]
+      properties:
+        session:
+          type: object
+          required: [idle_minutes, absolute_hours]
+          properties:
+            idle_minutes: { type: integer, minimum: 5, maximum: 1440 }
+            absolute_hours: { type: integer, minimum: 1, maximum: 168 }
+        security:
+          type: object
+          required: [mfa_required, allow_totp]
+          properties:
+            mfa_required: { type: boolean, description: Require MFA for all local accounts }
+            allow_totp: { type: boolean, description: Allow TOTP besides WebAuthn }
+        retention:
+          type: object
+          required: [metrics_days, audit_days, recordings_days, job_output_days]
+          properties:
+            metrics_days: { type: integer, minimum: 1, maximum: 3650 }
+            audit_days: { type: integer, minimum: 365, maximum: 36500 }
+            recordings_days: { type: integer, minimum: 1, maximum: 3650 }
+            job_output_days: { type: integer, minimum: 1, maximum: 3650 }
+        notifications: { $ref: "#/components/schemas/NotificationSettings" }
+        shell: { $ref: "#/components/schemas/ShellSettings" }
+    NotificationSettings:
+      type: object
+      required: [email, webhooks]
+      properties:
+        email:
+          type: object
+          required: [enabled]
+          properties:
+            enabled: { type: boolean }
+            smtp_host: { type: string, maxLength: 255 }
+            smtp_port: { type: integer, minimum: 1, maximum: 65535 }
+            smtp_username: { type: string, maxLength: 255 }
+            smtp_password:
+              type: string
+              maxLength: 255
+              description: Write-only. Returned as empty string; send empty to keep the stored value.
+            starttls: { type: boolean }
+            from: { type: string, maxLength: 255 }
+            to:
+              type: array
+              maxItems: 50
+              items: { type: string, maxLength: 255 }
+        webhooks:
+          type: array
+          maxItems: 20
+          items: { $ref: "#/components/schemas/WebhookTarget" }
+    WebhookTarget:
+      type: object
+      required: [name, url, enabled]
+      properties:
+        name: { type: string, maxLength: 64 }
+        url: { type: string, maxLength: 2048, description: "https:// URL" }
+        enabled: { type: boolean }
+        secret:
+          type: string
+          maxLength: 255
+          description: Write-only HMAC-SHA256 signing secret (X-Stellwerk-Signature header). Returned empty.
+        min_severity: { type: string, enum: [info, warning, critical] }
+    NotificationTestRequest:
+      type: object
+      required: [channel]
+      properties:
+        channel: { type: string, enum: [email, webhook] }
+        webhook_name: { type: string }
+    ShellSettings:
+      type: object
+      required: [default_identity, shared_account, allow_root, max_duration_minutes, idle_timeout_minutes]
+      description: Fleet-wide shell defaults; host groups may override.
+      properties:
+        default_identity: { $ref: "#/components/schemas/ShellIdentityMode" }
+        shared_account: { type: string, maxLength: 32 }
+        allow_root: { type: boolean, description: "Central permission to request root shells (host policy must also allow it)" }
+        max_duration_minutes: { type: integer, minimum: 1, maximum: 1440 }
+        idle_timeout_minutes: { type: integer, minimum: 1, maximum: 1440 }
+    ShellIdentityMode:
+      type: string
+      enum: [shared, per_user, choose]
+      description: |
+        shared = every user gets the shared account; per_user = the
+        Stellwerk username is used as the unix account; choose = the user
+        picks an account (subject to host policy).
+
+    # ----- auth
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, minLength: 1, maxLength: 64 }
+        password: { type: string, minLength: 1, maxLength: 1024 }
+    LoginResult:
+      type: object
+      required: [state]
+      properties:
+        state: { $ref: "#/components/schemas/SessionState" }
+        mfa_methods:
+          type: array
+          items: { type: string, enum: [totp, webauthn] }
+    SessionState:
+      type: string
+      enum: [pending_mfa, pending_password_change, pending_mfa_enrollment, active]
+    SessionInfo:
+      type: object
+      required: [state, user, permissions, csrf_token, expires_at, mfa]
+      properties:
+        state: { $ref: "#/components/schemas/SessionState" }
+        user: { $ref: "#/components/schemas/User" }
+        permissions:
+          type: array
+          description: Effective permissions (global bindings) for UI gating; the server always re-checks.
+          items: { type: string }
+        scoped_permissions:
+          type: array
+          items: { $ref: "#/components/schemas/ScopedPermission" }
+        csrf_token: { type: string }
+        expires_at: { type: string, format: date-time }
+        stepup_valid_until: { type: string, format: date-time, nullable: true }
+        mfa:
+          type: object
+          required: [totp, webauthn]
+          properties:
+            totp: { type: boolean }
+            webauthn: { type: integer, description: Number of registered security keys }
+    ScopedPermission:
+      type: object
+      required: [permission, host_group_id]
+      properties:
+        permission: { type: string }
+        host_group_id: { type: string, format: uuid }
+    ChangePasswordRequest:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password: { type: string, maxLength: 1024 }
+        new_password: { type: string, minLength: 12, maxLength: 1024 }
+    TotpCode:
+      type: object
+      required: [code]
+      properties:
+        code: { type: string, pattern: "^[0-9]{6}$" }
+    TotpEnrollment:
+      type: object
+      required: [secret, otpauth_url]
+      properties:
+        secret: { type: string, description: Base32 }
+        otpauth_url: { type: string }
+    WebauthnOptions:
+      type: object
+      description: Options object to pass to navigator.credentials.create/get (binary fields base64url-encoded).
+      additionalProperties: true
+    WebauthnCredentialResponse:
+      type: object
+      description: PublicKeyCredential serialized to JSON (base64url fields).
+      additionalProperties: true
+    WebauthnRegistrationFinish:
+      type: object
+      required: [name, credential]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        credential: { $ref: "#/components/schemas/WebauthnCredentialResponse" }
+    WebauthnCredential:
+      type: object
+      required: [id, name, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: string, format: date-time, nullable: true }
+
+    # ----- users
+    User:
+      type: object
+      required: [id, username, display_name, email, disabled, mfa_required, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        username: { type: string }
+        display_name: { type: string }
+        email: { type: string }
+        disabled: { type: boolean }
+        mfa_required: { type: boolean }
+        mfa_enrolled: { type: boolean }
+        last_login_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    UserCreate:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string, pattern: "^[a-z0-9][a-z0-9._-]{0,63}$" }
+        display_name: { type: string, maxLength: 128 }
+        email: { type: string, maxLength: 255 }
+        mfa_required: { type: boolean, default: true }
+        role_bindings:
+          type: array
+          maxItems: 100
+          items: { $ref: "#/components/schemas/RoleBindingInput" }
+    UserCreated:
+      type: object
+      required: [user, one_time_password]
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        one_time_password: { type: string }
+    UserUpdate:
+      type: object
+      properties:
+        display_name: { type: string, maxLength: 128 }
+        email: { type: string, maxLength: 255 }
+        disabled: { type: boolean }
+        mfa_required: { type: boolean }
+    OneTimePassword:
+      type: object
+      required: [one_time_password]
+      properties:
+        one_time_password: { type: string }
+    Role:
+      type: object
+      required: [id, name, description, permissions, builtin]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        permissions:
+          type: array
+          items: { type: string }
+        builtin: { type: boolean }
+    RoleBinding:
+      type: object
+      required: [id, role_id, role_name]
+      properties:
+        id: { type: string, format: uuid }
+        role_id: { type: string, format: uuid }
+        role_name: { type: string }
+        host_group_id: { type: string, format: uuid, nullable: true, description: null = global }
+        host_group_name: { type: string, nullable: true }
+    RoleBindingInput:
+      type: object
+      required: [role_id]
+      properties:
+        role_id: { type: string, format: uuid }
+        host_group_id: { type: string, format: uuid, nullable: true }
+
+    # ----- groups
+    HostGroup:
+      type: object
+      required: [id, name, description, host_count, shell]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        parent_id: { type: string, format: uuid, nullable: true }
+        description: { type: string }
+        host_count: { type: integer }
+        shell: { $ref: "#/components/schemas/GroupShellSettings" }
+    HostGroupInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, pattern: "^[A-Za-z0-9][A-Za-z0-9 ._-]{0,63}$" }
+        parent_id: { type: string, format: uuid, nullable: true }
+        description: { type: string, maxLength: 512 }
+        shell: { $ref: "#/components/schemas/GroupShellSettings" }
+    GroupShellSettings:
+      type: object
+      description: Overrides of the fleet shell defaults for hosts in this group (unset = inherit).
+      properties:
+        identity: { $ref: "#/components/schemas/ShellIdentityMode" }
+        shared_account: { type: string, maxLength: 32 }
+        allow_root: { type: boolean }
+
+    # ----- hosts
+    HostStatus:
+      type: string
+      enum: [active, disabled, decommissioned]
+    Host:
+      type: object
+      required: [id, hostname, status, connected, labels, groups]
+      properties:
+        id: { type: string, format: uuid }
+        hostname: { type: string }
+        fqdn: { type: string }
+        status: { $ref: "#/components/schemas/HostStatus" }
+        connected: { type: boolean }
+        os_family: { type: string }
+        os_id: { type: string }
+        os_version: { type: string }
+        os_pretty_name: { type: string }
+        kernel: { type: string }
+        arch: { type: string }
+        agent_version: { type: string }
+        last_seen_at: { type: string, format: date-time, nullable: true }
+        enrolled_at: { type: string, format: date-time, nullable: true }
+        cert_not_after: { type: string, format: date-time, nullable: true }
+        labels:
+          type: object
+          additionalProperties: { type: string }
+        groups:
+          type: array
+          items: { $ref: "#/components/schemas/GroupRef" }
+        policy: { $ref: "#/components/schemas/PolicySummary" }
+        updates:
+          type: object
+          properties:
+            total: { type: integer }
+            security: { type: integer }
+            reboot_required: { type: boolean }
+        primary_ip: { type: string }
+    GroupRef:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+    PolicySummary:
+      type: object
+      description: Informational copy of the host's local policy.
+      additionalProperties: true
+    HostUpdate:
+      type: object
+      properties:
+        labels:
+          type: object
+          maxProperties: 64
+          additionalProperties: { type: string, maxLength: 256 }
+        group_ids:
+          type: array
+          maxItems: 64
+          items: { type: string, format: uuid }
+        status:
+          type: string
+          enum: [active, disabled]
+    Inventory:
+      type: object
+      required: [sections]
+      properties:
+        sections:
+          type: object
+          description: kind → { collected_at, data }
+          additionalProperties: { $ref: "#/components/schemas/InventorySection" }
+    InventorySection:
+      type: object
+      required: [collected_at, data]
+      properties:
+        collected_at: { type: string, format: date-time }
+        data:
+          type: object
+          additionalProperties: true
+    Package:
+      type: object
+      required: [name, version, arch]
+      properties:
+        name: { type: string }
+        version: { type: string }
+        arch: { type: string }
+        source: { type: string }
+        purl: { type: string }
+    HostUpdates:
+      type: object
+      required: [updates, reboot_required]
+      properties:
+        manager: { type: string }
+        checked_at: { type: string, format: date-time, nullable: true }
+        reboot_required: { type: boolean }
+        reboot_reasons:
+          type: array
+          items: { type: string }
+        error: { type: string }
+        updates:
+          type: array
+          items: { $ref: "#/components/schemas/PendingUpdate" }
+    PendingUpdate:
+      type: object
+      required: [name, current_version, candidate_version, is_security]
+      properties:
+        name: { type: string }
+        arch: { type: string }
+        current_version: { type: string }
+        candidate_version: { type: string }
+        source: { type: string }
+        is_security: { type: boolean }
+        advisories:
+          type: array
+          items: { type: string }
+    HostUpdatesSummary:
+      type: object
+      required: [host_id, hostname, connected, total, security, reboot_required]
+      properties:
+        host_id: { type: string, format: uuid }
+        hostname: { type: string }
+        connected: { type: boolean }
+        os_pretty_name: { type: string }
+        total: { type: integer }
+        security: { type: integer }
+        reboot_required: { type: boolean }
+        checked_at: { type: string, format: date-time, nullable: true }
+    ProcessSnapshot:
+      type: object
+      required: [processes]
+      properties:
+        collected_at: { type: string, format: date-time, nullable: true }
+        total: { type: integer }
+        processes:
+          type: array
+          items:
+            type: object
+            required: [pid, name]
+            properties:
+              pid: { type: integer }
+              name: { type: string }
+              user: { type: string }
+              cpu_percent: { type: number }
+              rss_bytes: { type: integer, format: int64 }
+              cmdline: { type: string }
+              state: { type: string }
+    MetricsPanel:
+      type: string
+      enum: [cpu, load, memory, swap, disk_usage, disk_io, network, tcp, pressure]
+    MetricsResponse:
+      type: object
+      required: [panel, unit, series]
+      properties:
+        panel: { $ref: "#/components/schemas/MetricsPanel" }
+        unit: { type: string, description: "percent, bytes, bytes_per_second, ops_per_second, count, seconds" }
+        series:
+          type: array
+          items:
+            type: object
+            required: [label, points]
+            properties:
+              label: { type: string }
+              points:
+                type: array
+                description: "[unix_seconds, value] pairs"
+                items:
+                  type: array
+                  minItems: 2
+                  maxItems: 2
+                  items: { type: number }
+    CheckResult:
+      type: object
+      required: [check_id, status, severity, title]
+      properties:
+        check_id: { type: string }
+        status: { type: string, enum: [pass, fail, warn, na, error] }
+        severity: { type: string, enum: [info, low, medium, high, critical] }
+        title: { type: string }
+        summary: { type: string }
+        evidence:
+          type: object
+          additionalProperties: { type: string }
+        collected_at: { type: string, format: date-time }
+    SecuritySummary:
+      type: object
+      required: [hosts, failing_checks]
+      properties:
+        hosts: { type: integer }
+        compliance_percent: { type: number }
+        failing_checks:
+          type: array
+          items:
+            type: object
+            required: [check_id, title, severity, host_count]
+            properties:
+              check_id: { type: string }
+              title: { type: string }
+              severity: { type: string }
+              host_count: { type: integer }
+
+    # ----- shell
+    ShellSessionCreate:
+      type: object
+      properties:
+        unix_user:
+          type: string
+          pattern: "^[a-z_][a-z0-9_.-]{0,31}$"
+          description: Only honored when the identity mode is `choose`.
+        cols: { type: integer, minimum: 10, maximum: 1000, default: 120 }
+        rows: { type: integer, minimum: 5, maximum: 1000, default: 32 }
+    ShellSession:
+      type: object
+      required: [id, host_id, username, unix_user, started_at]
+      properties:
+        id: { type: string, format: uuid }
+        host_id: { type: string, format: uuid }
+        hostname: { type: string }
+        username: { type: string }
+        unix_user: { type: string }
+        started_at: { type: string, format: date-time }
+        ended_at: { type: string, format: date-time, nullable: true }
+        end_reason: { type: string }
+        has_recording: { type: boolean }
+        websocket_path: { type: string }
+
+    # ----- enrollment
+    EnrollmentToken:
+      type: object
+      required: [id, description, max_uses, uses, expires_at, created_at, labels]
+      properties:
+        id: { type: string, format: uuid }
+        description: { type: string }
+        host_group_id: { type: string, format: uuid, nullable: true }
+        labels:
+          type: object
+          additionalProperties: { type: string }
+        max_uses: { type: integer }
+        uses: { type: integer }
+        expires_at: { type: string, format: date-time }
+        revoked_at: { type: string, format: date-time, nullable: true }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+    EnrollmentTokenCreate:
+      type: object
+      properties:
+        description: { type: string, maxLength: 256 }
+        host_group_id: { type: string, format: uuid, nullable: true }
+        labels:
+          type: object
+          maxProperties: 32
+          additionalProperties: { type: string, maxLength: 256 }
+        max_uses: { type: integer, minimum: 1, maximum: 1000, default: 1 }
+        ttl_hours: { type: integer, minimum: 1, maximum: 720, default: 24 }
+    EnrollmentTokenCreated:
+      type: object
+      required: [token, secret, install_command]
+      properties:
+        token: { $ref: "#/components/schemas/EnrollmentToken" }
+        secret: { type: string }
+        install_command: { type: string }
+
+    # ----- jobs
+    JobType:
+      type: string
+      enum: [pkg_refresh, pkg_upgrade, pkg_install, pkg_remove, service, reboot, run_check, collect_inventory]
+    JobCreate:
+      type: object
+      required: [type, targets]
+      properties:
+        type: { $ref: "#/components/schemas/JobType" }
+        params: { $ref: "#/components/schemas/JobParams" }
+        targets: { $ref: "#/components/schemas/JobTargets" }
+    JobParams:
+      type: object
+      properties:
+        scope: { type: string, enum: [all, security, named] }
+        packages:
+          type: array
+          maxItems: 500
+          items: { type: string, maxLength: 128 }
+        unit: { type: string, maxLength: 256 }
+        op: { type: string, enum: [start, stop, restart, reload, enable, disable] }
+        delay_s: { type: integer, minimum: 0, maximum: 3600 }
+        message: { type: string, maxLength: 256 }
+        check_ids:
+          type: array
+          maxItems: 200
+          items: { type: string, maxLength: 32 }
+    JobTargets:
+      type: object
+      properties:
+        host_ids:
+          type: array
+          maxItems: 1000
+          items: { type: string, format: uuid }
+        host_group_ids:
+          type: array
+          maxItems: 100
+          items: { type: string, format: uuid }
+    JobStatus:
+      type: string
+      enum: [running, succeeded, failed, partial, canceled]
+    Job:
+      type: object
+      required: [id, type, params, status, requested_by, created_at, counts]
+      properties:
+        id: { type: string, format: uuid }
+        type: { $ref: "#/components/schemas/JobType" }
+        params: { $ref: "#/components/schemas/JobParams" }
+        status: { $ref: "#/components/schemas/JobStatus" }
+        requested_by: { type: string }
+        created_at: { type: string, format: date-time }
+        finished_at: { type: string, format: date-time, nullable: true }
+        counts:
+          type: object
+          required: [total, queued, running, succeeded, failed]
+          properties:
+            total: { type: integer }
+            queued: { type: integer }
+            running: { type: integer }
+            succeeded: { type: integer }
+            failed: { type: integer }
+    JobTargetStatus:
+      type: string
+      enum: [queued, dispatched, running, succeeded, failed, rejected, canceled, timed_out, expired]
+    JobTarget:
+      type: object
+      required: [job_id, host_id, hostname, status]
+      properties:
+        job_id: { type: string, format: uuid }
+        host_id: { type: string, format: uuid }
+        hostname: { type: string }
+        status: { $ref: "#/components/schemas/JobTargetStatus" }
+        exit_code: { type: integer, nullable: true }
+        message: { type: string }
+        dispatched_at: { type: string, format: date-time, nullable: true }
+        started_at: { type: string, format: date-time, nullable: true }
+        finished_at: { type: string, format: date-time, nullable: true }
+    JobOutputChunk:
+      type: object
+      required: [id, ts, stream, data]
+      properties:
+        id: { type: integer, format: int64 }
+        ts: { type: string, format: date-time }
+        stream: { type: string, enum: [stdout, stderr, info] }
+        data: { type: string, description: UTF-8 text (invalid sequences replaced) }
+
+    # ----- audit
+    AuditEntry:
+      type: object
+      required: [id, ts, actor, action, target, details]
+      properties:
+        id: { type: integer, format: int64 }
+        ts: { type: string, format: date-time }
+        actor: { type: string }
+        actor_ip: { type: string }
+        action: { type: string }
+        target: { type: string }
+        details:
+          type: object
+          additionalProperties: true
+        hash: { type: string }
+    AuditVerifyResult:
+      type: object
+      required: [ok, checked]
+      properties:
+        ok: { type: boolean }
+        checked: { type: integer, format: int64 }
+        first_bad_id: { type: integer, format: int64, nullable: true }
+        message: { type: string }
+
+    # ----- alerts
+    Alert:
+      type: object
+      required: [id, name, severity, status, starts_at, labels]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        severity: { type: string }
+        status: { type: string, enum: [firing, resolved] }
+        host_id: { type: string, format: uuid, nullable: true }
+        hostname: { type: string }
+        summary: { type: string }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time, nullable: true }
+        labels:
+          type: object
+          additionalProperties: { type: string }
+    AlertmanagerPayload:
+      type: object
+      required: [alerts]
+      properties:
+        status: { type: string }
+        alerts:
+          type: array
+          maxItems: 1000
+          items:
+            type: object
+            required: [status, labels, startsAt, fingerprint]
+            properties:
+              status: { type: string }
+              labels:
+                type: object
+                additionalProperties: { type: string }
+              annotations:
+                type: object
+                additionalProperties: { type: string }
+              startsAt: { type: string, format: date-time }
+              endsAt: { type: string, format: date-time }
+              fingerprint: { type: string }
+
+    # ----- dashboard / events
+    Dashboard:
+      type: object
+      required: [hosts_total, hosts_connected, hosts_offline, updates_pending_hosts, security_updates, reboot_required, alerts_firing, expiring_certs]
+      properties:
+        hosts_total: { type: integer }
+        hosts_connected: { type: integer }
+        hosts_offline: { type: integer }
+        updates_pending_hosts: { type: integer }
+        security_updates: { type: integer }
+        reboot_required: { type: integer }
+        alerts_firing: { type: integer }
+        expiring_certs: { type: integer }
+        recent_jobs:
+          type: array
+          items: { $ref: "#/components/schemas/Job" }
+    Event:
+      type: object
+      required: [type, ts]
+      properties:
+        type:
+          type: string
+          enum: [host.connected, host.disconnected, host.enrolled, host.updated, job.created, job.target, job.finished, alert]
+        ts: { type: string, format: date-time }
+        host_id: { type: string, format: uuid }
+        job_id: { type: string, format: uuid }
+        status: { type: string }
+        message: { type: string }
