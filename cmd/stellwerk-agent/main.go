@@ -157,10 +157,11 @@ func run(ctx context.Context, cfgPath string) error {
 		Helper: hc, Journal: jr,
 		TimeSynced: func() (bool, error) { ok, _, err := timesync.Synchronized(); return ok, err },
 	}
+	chk := newChecks(hc, pol)
 	agent, err := runtime.New(runtime.Config{
 		Policy: pol, Paths: paths, Identity: state.NewIdentity(cert), Roots: roots, Version: version.Version,
 		Metrics: &metricsAdapter{collectors: collectors, enc: collect.NewEncoder(10000)}, Inventory: inv, Spool: sp,
-		Processes: processAdapter{collect.NewProcSampler("/proc")}, Updates: hc, Checks: newChecks(hc, pol),
+		Processes: processAdapter{collect.NewProcSampler("/proc")}, Updates: hc, Checks: chk,
 		HelperAvailable: helperUp, Runner: runner,
 		OnProbes: func(p []*agentv1.Probe) {
 			if probes != nil {
@@ -171,6 +172,7 @@ func run(ctx context.Context, cfgPath string) error {
 	if err != nil {
 		return err
 	}
+	chk.setUpdates(agent.LastUpdates)
 	if agent.HostID() != hostID {
 		return errors.New("certificate identity does not match /etc/stellwerk/host-id")
 	}

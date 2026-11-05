@@ -7,7 +7,7 @@ Central Linux server management platform: Go server + Go agent (outbound mTLS gR
 
 > Update this line when a phase is finished.
 
-**Phases 0–3 implemented; Phase 4 partially** (see ARCHITECTURE.md §9 and the checklists below). Owner decisions on the former open questions are in ARCHITECTURE.md §12 (local accounts, no IdP yet — ADR-0009). Next: VM-based validation of the Phase 1–3 exit criteria, then the Phase 4 vulnerability worker.
+**Phases 0–3 implemented; Phase 4 except the vulnerability worker** (see ARCHITECTURE.md §9 and the checklists below). Owner decisions on the former open questions are in ARCHITECTURE.md §12 (local accounts, no IdP yet — ADR-0009). Next: VM-based validation of the Phase 1–3 exit criteria, then the Phase 4 vulnerability worker.
 
 ## Tech stack (fixed — don't swap without an ADR)
 
@@ -96,7 +96,7 @@ make e2e            # VM-based end-to-end tests (Incus/Vagrant)
 - [ ] OIDC login — deferred by owner decision (ADR-0009)
 
 ### Phase 4 — Security & alerting
-- [ ] Built-in checks (§7.1) — in progress
+- [x] Built-in checks (§7.1): 29 checks, helper-backed privileged reads, results + compliance summary API/UI
 - [x] vmalert + Alertmanager default rules, alerts API, mail + webhook notifications, host-down state alerts
 - [ ] SBOM → Grype vuln worker, CVE views, remediation
 - [ ] Optional Lynis integration

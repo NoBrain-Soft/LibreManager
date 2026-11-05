@@ -29,7 +29,7 @@ Browser ──HTTPS──▶ Caddy ──▶ stellwerk-server api ──unix soc
 | 1 | Init, gateway (enroll/connect/renew/revocation), agent (collectors, spool, inventory), remote-write, API with local auth, web UI, installers, packaging | done; smoke-tested with real binaries, VM validation pending |
 | 2 | Signer, signed jobs, helper with apt/dnf/services/reboot, job framework, audit chain + syslog export | done |
 | 3 | Remote shell (PTY via helper, dedicated stream, recordings), RBAC scopes, step-up | done (OIDC deferred, ADR-0009) |
-| 4 | Security checks, alerting + notifications | checks + alerting done; Grype vulnerability worker open |
+| 4 | Security checks (29, §7.1), alerting + notifications | done except the Grype vulnerability worker |
 | 5–6 | Patch policies/rings, self-update, 4-eyes, scripts, HA, … | not started |
 
 See the checklists in [`CLAUDE.md`](CLAUDE.md).
