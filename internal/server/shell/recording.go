@@ -45,10 +45,10 @@ type Recorder struct {
 		io.Writer
 		Sum([]byte) []byte
 	}
-	total      int64
-	lastFlush  time.Time
-	truncated  bool
-	Path       string
+	total     int64
+	lastFlush time.Time
+	truncated bool
+	Path      string
 }
 
 // NewRecorder creates <dir>/<sessionID>.cast.swk.
@@ -92,10 +92,14 @@ func (r *Recorder) event(t time.Time, kind, data string) {
 }
 
 // Output records terminal output.
-func (r *Recorder) Output(t time.Time, data []byte) { r.event(t, "o", string(bytes.ToValidUTF8(data, []byte("?")))) }
+func (r *Recorder) Output(t time.Time, data []byte) {
+	r.event(t, "o", string(bytes.ToValidUTF8(data, []byte("?"))))
+}
 
 // Resize records a terminal resize.
-func (r *Recorder) Resize(t time.Time, cols, rows int) { r.event(t, "r", fmt.Sprintf("%dx%d", cols, rows)) }
+func (r *Recorder) Resize(t time.Time, cols, rows int) {
+	r.event(t, "r", fmt.Sprintf("%dx%d", cols, rows))
+}
 
 func (r *Recorder) flushLocked(t time.Time) error {
 	if r.buf.Len() == 0 {

@@ -201,8 +201,11 @@ func (s *Server) clientIP(r *http.Request) string {
 
 // --- context accessors
 
-func sessionFrom(ctx context.Context) *db.Session { s, _ := ctx.Value(keySession).(*db.Session); return s }
-func userFrom(ctx context.Context) *db.User       { u, _ := ctx.Value(keyUser).(*db.User); return u }
+func sessionFrom(ctx context.Context) *db.Session {
+	s, _ := ctx.Value(keySession).(*db.Session)
+	return s
+}
+func userFrom(ctx context.Context) *db.User { u, _ := ctx.Value(keyUser).(*db.User); return u }
 func principalFrom(ctx context.Context) *rbac.Principal {
 	p, _ := ctx.Value(keyPrincipal).(*rbac.Principal)
 	return p

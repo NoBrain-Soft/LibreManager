@@ -111,15 +111,17 @@ func (c *Config) AgentHost() string {
 }
 
 // Paths of secrets and sockets.
-func (c *Config) APISecret(name string) string     { return filepath.Join(c.SecretsDir, "api", name) }
-func (c *Config) GatewaySecret(name string) string { return filepath.Join(c.SecretsDir, "gateway", name) }
-func (c *Config) SignerSecret(name string) string  { return filepath.Join(c.SecretsDir, "signer", name) }
-func (c *Config) CASecret(name string) string      { return filepath.Join(c.SecretsDir, "ca", name) }
-func (c *Config) SignerSocket() string             { return filepath.Join(c.RunDir, "signer", "signer.sock") }
-func (c *Config) ControlSocket() string            { return filepath.Join(c.RunDir, "gateway", "control.sock") }
-func (c *Config) RecordingsDir() string            { return filepath.Join(c.DataDir, "recordings") }
-func (c *Config) PackagesDir() string              { return filepath.Join(c.DataDir, "packages") }
-func (c *Config) SignerLogPath() string            { return filepath.Join(c.DataDir, "signer", "signatures.log") }
+func (c *Config) APISecret(name string) string { return filepath.Join(c.SecretsDir, "api", name) }
+func (c *Config) GatewaySecret(name string) string {
+	return filepath.Join(c.SecretsDir, "gateway", name)
+}
+func (c *Config) SignerSecret(name string) string { return filepath.Join(c.SecretsDir, "signer", name) }
+func (c *Config) CASecret(name string) string     { return filepath.Join(c.SecretsDir, "ca", name) }
+func (c *Config) SignerSocket() string            { return filepath.Join(c.RunDir, "signer", "signer.sock") }
+func (c *Config) ControlSocket() string           { return filepath.Join(c.RunDir, "gateway", "control.sock") }
+func (c *Config) RecordingsDir() string           { return filepath.Join(c.DataDir, "recordings") }
+func (c *Config) PackagesDir() string             { return filepath.Join(c.DataDir, "packages") }
+func (c *Config) SignerLogPath() string           { return filepath.Join(c.DataDir, "signer", "signatures.log") }
 
 func env(k, def string) string {
 	if v := os.Getenv(k); v != "" {
